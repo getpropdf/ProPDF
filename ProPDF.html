@@ -401,7 +401,7 @@ a:hover { text-decoration: underline; }
       </div>
       <div class="disclaimer">
         <span class="pill">DPDP-aligned</span>
-        &nbsp;ProPDF runs entirely on your machine. No cloud. No telemetry. No tracking. Free to use and share.
+        &nbsp;ProPDF runs entirely on your machine. No cloud. Free to use and share.
       </div>
     </div>
   </footer>
@@ -777,6 +777,7 @@ a:hover { text-decoration: underline; }
     if (id === "changelog") return renderChangelog(main);
     var tool = App.getTool(id);
     if (!tool) return renderHome(main);
+    if (App.track) App.track("tool/" + id, "Tool: " + tool.name);
 
     var head = el("div");
     head.innerHTML =
@@ -935,6 +936,17 @@ a:hover { text-decoration: underline; }
 
   /* ---------------- version + update check ---------------- */
   App.VERSION = "v10.3";
+  var GC_ENDPOINT = "";
+  function initAnalytics(url) {
+    if (GC_ENDPOINT || !url || typeof location === "undefined" || !/^https?:/.test(location.protocol)) return;
+    GC_ENDPOINT = url;
+    var s = document.createElement("script");
+    s.async = true; s.src = "https://gc.zgo.at/count.js"; s.setAttribute("data-goatcounter", url);
+    document.head.appendChild(s);
+  }
+  App.track = function (path, title) {
+    try { if (GC_ENDPOINT && window.goatcounter && window.goatcounter.count) window.goatcounter.count({ path: path, title: title || path, event: true }); } catch (e) {}
+  };
   function cmpVer(a, b) { var pa = String(a).match(/\d+/g) || [], pb = String(b).match(/\d+/g) || []; var n = Math.max(pa.length, pb.length); for (var i = 0; i < n; i++) { var x = parseInt(pa[i] || 0, 10), y = parseInt(pb[i] || 0, 10); if (x !== y) return x > y; } return false; }
   function injectVersionBadge() {
     var bn = document.querySelector(".brand-name");
@@ -955,7 +967,7 @@ a:hover { text-decoration: underline; }
     if (typeof location === "undefined" || !/^https?:/.test(location.protocol)) return;  // only when hosted online
     fetch("version.json?_=" + Date.now(), { cache: "no-store" })
       .then(function (r) { return r.ok ? r.json() : null; })
-      .then(function (j) { if (j && j.version && cmpVer(j.version, App.VERSION)) showUpdateBar(j.version, j.notes || ""); })
+      .then(function (j) { if (!j) return; if (j.analytics) initAnalytics(j.analytics); if (j.version && cmpVer(j.version, App.VERSION)) showUpdateBar(j.version, j.notes || ""); })
       .catch(function () {});
   };
 
