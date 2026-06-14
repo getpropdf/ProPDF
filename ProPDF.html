@@ -327,9 +327,9 @@ a:hover { text-decoration: underline; }
 .update-x:hover { color: var(--danger); background: rgba(224,69,90,.12); }
 
 /* ---------- v10: redact ---------- */
-.redact-viewer { display: flex; flex-direction: column; gap: 14px; margin-top: 14px; max-height: 72vh; overflow: auto; padding: 4px; }
-.rd-page { position: relative; border: 1px solid var(--glass-brd); border-radius: 10px; overflow: hidden; background: var(--glass-2); }
-.rd-page canvas { display: block; width: 100%; }
+.redact-viewer { display: block; margin-top: 14px; max-height: 80vh; overflow: auto; padding: 6px; background: var(--glass-2); border: 1px solid var(--glass-brd); border-radius: 14px; }
+.rd-page { position: relative; border: 1px solid var(--glass-brd); border-radius: 10px; overflow: hidden; background: #fff; width: -moz-fit-content; width: fit-content; max-width: 100%; margin: 0 auto 14px; }
+.rd-page canvas { display: block; max-width: 100%; height: auto; }
 .rd-overlay { position: absolute; inset: 0; cursor: crosshair; }
 .rd-box { position: absolute; background: rgba(0,0,0,.55); border: 1px solid #000; cursor: pointer; }
 .rd-box.auto { background: rgba(214,69,90,.45); border-color: var(--danger); }
@@ -820,6 +820,13 @@ a:hover { text-decoration: underline; }
   }
 
   var CHANGELOG = [
+    { v: "v10.3", title: "Fix — Redaction preview shows full pages", items: [
+      "Redact: the preview is now a single scrollable area showing every page at full height — scroll down through all pages and draw redaction boxes anywhere. (Multi-page PDFs previously shrank each page to a thin strip.)"
+    ] },
+    { v: "v10.2", title: "Fix — Redaction page preview", items: [
+      "Redact: the page preview now shows each page at full size (previously multi-page PDFs collapsed to a thin strip), so you can clearly see every page and draw redaction boxes anywhere.",
+      "Hardened the Compare visual-diff preview sizing too."
+    ] },
     { v: "v10.1", title: "Fixes — Redaction detect & Interactive Overlay", items: [
       "Redact: auto-detect now catches sensitive values split across text fragments (e.g. PAN, account numbers, emails) in iText / government PDFs — previously some were missed.",
       "Overlay / Letterhead: redesigned with on-screen handles — drag to move, corner ◢ to resize, top ⟳ to rotate — with a live preview, instead of typing numbers."
@@ -927,7 +934,7 @@ a:hover { text-decoration: underline; }
   window.ProPDF = App;
 
   /* ---------------- version + update check ---------------- */
-  App.VERSION = "v10.1";
+  App.VERSION = "v10.3";
   function cmpVer(a, b) { var pa = String(a).match(/\d+/g) || [], pb = String(b).match(/\d+/g) || []; var n = Math.max(pa.length, pb.length); for (var i = 0; i < n; i++) { var x = parseInt(pa[i] || 0, 10), y = parseInt(pb[i] || 0, 10); if (x !== y) return x > y; } return false; }
   function injectVersionBadge() {
     var bn = document.querySelector(".brand-name");
@@ -2497,9 +2504,11 @@ a:hover { text-decoration: underline; }
             if (i > st.n) { io.prog.hide(); st.rendered = true; bScan.disabled = false; bApply.disabled = false; return; }
             io.prog.set((i / st.n) * 100, "Rendering page " + i + " / " + st.n);
             return pdf.getPage(i).then(function (pg) {
-              var vp = pg.getViewport({ scale: 1.25 });
+              var b0 = pg.getViewport({ scale: 1 });
+              var vp = pg.getViewport({ scale: Math.min(2.2, 820 / b0.width) });
               var wrapP = el("div", { class: "rd-page" });
-              var c = el("canvas"); c.width = vp.width; c.height = vp.height; c.style.width = "100%";
+              var c = el("canvas"); c.width = vp.width; c.height = vp.height;
+              c.style.width = vp.width + "px"; c.style.maxWidth = "100%"; c.style.height = "auto"; c.style.display = "block";
               var ov = el("div", { class: "rd-overlay" });
               wrapP.appendChild(c); wrapP.appendChild(ov);
               var lbl = el("div", { class: "rd-pagenum" }, "Page " + i); wrapP.appendChild(lbl);
@@ -2939,7 +2948,7 @@ a:hover { text-decoration: underline; }
                 }
                 dx.putImageData(od, 0, 0);
                 if (diff > 0) totalDiff++;
-                dc.style.width = "100%"; dc.style.maxWidth = "640px"; dc.style.border = "1px solid var(--glass-brd)"; dc.style.borderRadius = "10px";
+                dc.style.maxWidth = "100%"; dc.style.height = "auto"; dc.style.display = "block"; dc.style.border = "1px solid var(--glass-brd)"; dc.style.borderRadius = "10px";
                 wrapP.appendChild(dc); out.appendChild(wrapP);
                 i++; return next();
               });

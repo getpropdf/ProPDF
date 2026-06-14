@@ -3,6 +3,17 @@
 All notable changes to ProPDF, newest first. ProPDF is a 100% local, DPDP-aligned
 PDF suite by **Kothari Jain & Associates**.
 
+## v10.3 — Fix: Redaction preview shows full pages
+- **Redact** — the preview is now a single scrollable area that shows every page at
+  full height. Scroll through all pages and draw redaction boxes anywhere.
+  (Multi-page PDFs previously shrank each page to a thin strip.)
+
+## v10.2 — Fix: Redaction page preview
+- **Redact** — the page preview now shows each page at full size; multi-page PDFs
+  previously collapsed to a thin strip. You can now see every page clearly and draw
+  redaction boxes anywhere.
+- Hardened the Compare visual-diff preview sizing.
+
 ## v10.1 — Fixes: Redaction detect & Interactive Overlay
 - **Redact** — auto-detect now catches sensitive values split across text fragments
   (e.g. PAN, account numbers, emails) in iText / government PDFs; previously some

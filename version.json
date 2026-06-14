@@ -1,4 +1,4 @@
 {
-  "version": "v10.1",
-  "notes": "Fixes: redaction auto-detect + interactive overlay (drag/resize/rotate)"
+  "version": "v10.3",
+  "notes": "Fix: redaction preview now shows full pages in one scrollable view"
 }
