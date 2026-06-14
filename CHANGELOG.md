@@ -3,6 +3,21 @@
 All notable changes to ProPDF, newest first. ProPDF is a 100% local, DPDP-aligned
 PDF suite by **Kothari Jain & Associates**.
 
+## v10 — Redaction, Overlay, Compare & OCR Workbench
+- **Redact PDF** — auto-detects sensitive data (PAN, GSTIN, TAN, CIN, DIN, IFSC,
+  Aadhaar, card / account numbers, emails, phones) and lets you draw redaction
+  boxes by hand. Redacted pages are **permanently flattened** so hidden text can't
+  be recovered; other pages keep their text. Works on scans via OCR; output is
+  verified for no recoverable text.
+- **Overlay / Letterhead** — stamp a letterhead, logo, signature or stamp
+  (PDF/PNG/JPG) over chosen pages with position, size, rotation, opacity and a
+  live preview.
+- **Compare PDFs** — text differences (added / removed / changed) and visual
+  pixel differences, with an exportable report; auto-OCR for scanned files.
+- **OCR Workbench** — review and correct OCR text, validate PAN/GSTIN/Aadhaar/
+  CIN/IFSC by checksum, and export to TXT, Word, Excel or a **searchable PDF**
+  (image + invisible, selectable text layer).
+
 ## v9 — Compress to a target size
 - **Compress PDF** can now hit a **target file size** — enter a limit in KB or MB
   (e.g. for GST / Income-Tax / MCA portals) and ProPDF automatically finds the best

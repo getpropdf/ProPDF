@@ -1,4 +1,4 @@
 {
-  "version": "v9",
-  "notes": "Compress to a target file size (KB/MB) for GST / Income-Tax portals"
+  "version": "v10",
+  "notes": "Redaction, Letterhead Overlay, PDF Compare & OCR Workbench"
 }
