@@ -1,0 +1,2358 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ProPDF — Professional PDF Tools | Kothari Jain &amp; Associates</title>
+  <meta name="description" content="ProPDF — Professional PDF Tools. Your data never leaves your office. 100% local PDF processing by Kothari Jain & Associates." />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%233b6ef5'/><text x='50' y='70' font-size='56' font-family='Arial' font-weight='bold' fill='white' text-anchor='middle'>P</text></svg>" />
+  <style>
+/* ============================================================
+   ProPDF — Material + Glassmorphism UI
+   Prepared by Kothari Jain & Associates
+   ============================================================ */
+
+:root {
+  --bg-0: #eef2fb;
+  --bg-1: #e6ecf8;
+  --glass: rgba(255, 255, 255, 0.62);
+  --glass-2: rgba(255, 255, 255, 0.80);
+  --glass-brd: rgba(255, 255, 255, 0.7);
+  --stroke: rgba(20, 40, 80, 0.10);
+  --text: #16203a;
+  --text-muted: #5a6a87;
+  --brand: #3b6ef5;
+  --brand-2: #6a3df0;
+  --accent: #0fb98a;
+  --danger: #e0455a;
+  --warning: #d68a1c;
+  --grad: linear-gradient(135deg, #3b6ef5 0%, #6a3df0 55%, #9b5cf6 100%);
+  --grad-accent: linear-gradient(135deg, #0fb98a, #3b6ef5);
+  --shadow-sm: 0 2px 8px rgba(30, 50, 90, .08);
+  --shadow-md: 0 8px 28px rgba(30, 50, 90, .14);
+  --shadow-lg: 0 18px 50px rgba(30, 50, 90, .20);
+  --radius: 20px;
+  --radius-sm: 13px;
+  --speed: .22s cubic-bezier(.2, .8, .2, 1);
+  --blur: saturate(160%) blur(16px);
+}
+
+[data-theme="dark"] {
+  --bg-0: #0a0e1a;
+  --bg-1: #0e1424;
+  --glass: rgba(26, 34, 56, 0.55);
+  --glass-2: rgba(30, 40, 66, 0.72);
+  --glass-brd: rgba(120, 140, 200, 0.18);
+  --stroke: rgba(150, 170, 220, 0.12);
+  --text: #e9eefb;
+  --text-muted: #98a6c4;
+  --brand: #6d97ff;
+  --brand-2: #a47bff;
+  --accent: #2fe0ad;
+  --danger: #ff6b7d;
+  --warning: #f0b44a;
+  --grad: linear-gradient(135deg, #4f7dff 0%, #7d54ff 55%, #a86bff 100%);
+  --grad-accent: linear-gradient(135deg, #2fe0ad, #4f7dff);
+  --shadow-sm: 0 2px 10px rgba(0, 0, 0, .35);
+  --shadow-md: 0 10px 34px rgba(0, 0, 0, .45);
+  --shadow-lg: 0 22px 60px rgba(0, 0, 0, .55);
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; min-height: 100%; }
+
+body {
+  color: var(--text);
+  font-family: "Segoe UI", Roboto, system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
+  font-size: 15px; line-height: 1.55; -webkit-font-smoothing: antialiased;
+  background: var(--bg-0); position: relative; overflow-x: hidden;
+}
+body::before {
+  content: ""; position: fixed; inset: -20%; z-index: -2;
+  background:
+    radial-gradient(40% 40% at 12% 18%, rgba(59, 110, 245, .26), transparent 60%),
+    radial-gradient(38% 38% at 88% 12%, rgba(106, 61, 240, .24), transparent 60%),
+    radial-gradient(45% 45% at 78% 88%, rgba(15, 185, 138, .20), transparent 60%),
+    radial-gradient(40% 40% at 20% 92%, rgba(155, 92, 246, .18), transparent 60%);
+  filter: blur(20px); animation: drift 22s ease-in-out infinite alternate;
+}
+body::after { content: ""; position: fixed; inset: 0; z-index: -3; background: linear-gradient(180deg, var(--bg-0), var(--bg-1)); }
+@keyframes drift { 0% { transform: translate3d(0,0,0) scale(1); } 100% { transform: translate3d(0,-3%,0) scale(1.08); } }
+
+a { color: var(--brand); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+.topbar {
+  position: sticky; top: 0; z-index: 50; display: flex; align-items: center; gap: 16px; padding: 13px 24px;
+  background: var(--glass); -webkit-backdrop-filter: var(--blur); backdrop-filter: var(--blur);
+  border-bottom: 1px solid var(--glass-brd); box-shadow: var(--shadow-sm);
+}
+.brand-logo { display: flex; align-items: center; gap: 12px; cursor: pointer; user-select: none; }
+.brand-mark {
+  width: 42px; height: 42px; border-radius: 13px; background: var(--grad);
+  display: grid; place-items: center; color: #fff; font-weight: 800; font-size: 19px;
+  box-shadow: 0 8px 20px rgba(59,110,245,.45), inset 0 1px 0 rgba(255,255,255,.4);
+}
+.brand-name { font-size: 21px; font-weight: 800; letter-spacing: -.4px; }
+.brand-name span { background: var(--grad); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+.brand-tag { font-size: 11.5px; color: var(--text-muted); margin-top: -3px; letter-spacing: .2px; }
+.topbar-spacer { flex: 1; }
+
+.search-box {
+  display: flex; align-items: center; gap: 9px; background: var(--glass-2); border: 1px solid var(--glass-brd);
+  border-radius: 999px; padding: 9px 16px; min-width: 240px; transition: box-shadow var(--speed), border-color var(--speed);
+}
+.search-box:focus-within { border-color: var(--brand); box-shadow: 0 0 0 4px rgba(59,110,245,.16); }
+.search-box input { border: none; outline: none; background: transparent; color: var(--text); width: 100%; font-size: 14px; }
+.search-box input::placeholder { color: var(--text-muted); }
+
+.icon-btn {
+  width: 44px; height: 44px; border-radius: 13px; border: 1px solid var(--glass-brd); background: var(--glass-2);
+  color: var(--text); cursor: pointer; display: grid; place-items: center; font-size: 19px;
+  transition: transform var(--speed), box-shadow var(--speed), background var(--speed);
+}
+.icon-btn:hover { transform: translateY(-2px) scale(1.04); box-shadow: var(--shadow-md); }
+.icon-btn:active { transform: translateY(0) scale(.98); }
+
+.privacy-banner {
+  display: flex; align-items: center; gap: 10px; justify-content: center; background: var(--grad-accent);
+  color: #fff; font-size: 13px; font-weight: 600; padding: 9px 16px; text-shadow: 0 1px 2px rgba(0,0,0,.2);
+}
+.privacy-banner .dot { width: 9px; height: 9px; border-radius: 50%; background: #fff; box-shadow: 0 0 0 4px rgba(255,255,255,.35); animation: pulse 2.2s infinite; }
+@keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: .45; } }
+
+.layout { display: flex; gap: 0; min-height: calc(100vh - 132px); align-items: stretch; }
+.sidebar {
+  width: 244px; flex-shrink: 0; padding: 18px 14px; margin: 16px 0 16px 16px; border-radius: var(--radius);
+  background: var(--glass); -webkit-backdrop-filter: var(--blur); backdrop-filter: var(--blur);
+  border: 1px solid var(--glass-brd); box-shadow: var(--shadow-md); align-self: flex-start; position: sticky; top: 84px;
+}
+.side-group-title { font-size: 10.5px; font-weight: 800; text-transform: uppercase; letter-spacing: .8px; color: var(--text-muted); padding: 16px 12px 6px; }
+.side-link {
+  display: flex; align-items: center; gap: 11px; padding: 10px 12px; border-radius: 12px; cursor: pointer;
+  color: var(--text); font-size: 14px; font-weight: 500; transition: background var(--speed), color var(--speed), transform var(--speed);
+}
+.side-link:hover { background: var(--glass-2); transform: translateX(3px); }
+.side-link.active { background: var(--grad); color: #fff; font-weight: 700; box-shadow: 0 6px 16px rgba(59,110,245,.4); }
+.side-link .ic { width: 20px; text-align: center; font-size: 16px; }
+
+.main { flex: 1; padding: 24px 30px; overflow-x: hidden; min-width: 0; }
+
+.hero {
+  position: relative; overflow: hidden; border-radius: var(--radius); padding: 34px; margin-bottom: 28px;
+  color: #fff; background: var(--grad); box-shadow: var(--shadow-lg);
+}
+.hero::after { content: ""; position: absolute; right: -60px; top: -60px; width: 260px; height: 260px; background: radial-gradient(circle, rgba(255,255,255,.25), transparent 70%); }
+.hero h1 { margin: 0 0 10px; font-size: 28px; letter-spacing: -.6px; line-height: 1.2; max-width: 760px; }
+.hero p { margin: 0; max-width: 760px; opacity: .95; font-size: 15px; }
+.hero p strong { font-weight: 800; }
+
+.section-title { font-size: 13px; font-weight: 800; margin: 28px 4px 16px; color: var(--text-muted); text-transform: uppercase; letter-spacing: .7px; }
+
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(208px, 1fr)); gap: 16px; }
+.card {
+  position: relative; overflow: hidden; cursor: pointer; border-radius: var(--radius); padding: 20px;
+  background: var(--glass); -webkit-backdrop-filter: var(--blur); backdrop-filter: var(--blur);
+  border: 1px solid var(--glass-brd); box-shadow: var(--shadow-sm);
+  transition: transform var(--speed), box-shadow var(--speed), border-color var(--speed);
+}
+.card::before {
+  content: ""; position: absolute; inset: 0; border-radius: inherit; padding: 1px; background: var(--grad); opacity: 0;
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor;
+  mask-composite: exclude; transition: opacity var(--speed);
+}
+.card:hover { transform: translateY(-6px); box-shadow: var(--shadow-lg); }
+.card:hover::before { opacity: 1; }
+.card .emoji {
+  width: 52px; height: 52px; border-radius: 15px; display: grid; place-items: center; font-size: 27px; margin-bottom: 14px;
+  background: var(--glass-2); border: 1px solid var(--glass-brd); box-shadow: inset 0 1px 0 rgba(255,255,255,.4); transition: transform var(--speed);
+}
+.card:hover .emoji { transform: scale(1.08) rotate(-4deg); }
+.card h3 { margin: 0 0 5px; font-size: 16px; font-weight: 700; }
+.card p { margin: 0; font-size: 12.8px; color: var(--text-muted); line-height: 1.45; }
+.card .badge {
+  position: absolute; top: 14px; right: 14px; font-size: 9.5px; font-weight: 800; letter-spacing: .4px; padding: 4px 9px;
+  border-radius: 999px; color: #fff; background: var(--grad-accent); text-transform: uppercase; box-shadow: var(--shadow-sm);
+}
+.card .badge.soon { background: linear-gradient(135deg, #f0a93a, #e0742a); }
+
+.tool-head { display: flex; align-items: center; gap: 12px; margin-bottom: 4px; flex-wrap: wrap; }
+.tool-head .back {
+  cursor: pointer; color: var(--text-muted); font-weight: 600; font-size: 13.5px; padding: 6px 12px; border-radius: 999px;
+  background: var(--glass); border: 1px solid var(--glass-brd); transition: background var(--speed), color var(--speed);
+}
+.tool-head .back:hover { color: var(--brand); }
+.tool-head h2 { margin: 0; font-size: 24px; letter-spacing: -.4px; }
+.tool-sub { color: var(--text-muted); margin: 6px 0 22px; max-width: 760px; }
+
+.panel {
+  border-radius: var(--radius); padding: 26px; background: var(--glass);
+  -webkit-backdrop-filter: var(--blur); backdrop-filter: var(--blur); border: 1px solid var(--glass-brd);
+  box-shadow: var(--shadow-md); margin-bottom: 18px;
+}
+
+.dropzone {
+  border: 2px dashed var(--stroke); border-radius: var(--radius); padding: 44px 20px; text-align: center; cursor: pointer;
+  transition: border-color var(--speed), background var(--speed), transform var(--speed); background: var(--glass-2);
+}
+.dropzone:hover, .dropzone.drag { border-color: var(--brand); background: rgba(59,110,245,.08); transform: translateY(-2px); }
+.dropzone .dz-icon { font-size: 44px; filter: drop-shadow(0 4px 8px rgba(59,110,245,.3)); }
+.dropzone h4 { margin: 14px 0 4px; font-size: 16.5px; }
+.dropzone p { margin: 0; color: var(--text-muted); font-size: 13px; }
+
+.filelist { margin-top: 16px; display: flex; flex-direction: column; gap: 9px; }
+.fileitem {
+  display: flex; align-items: center; gap: 12px; padding: 11px 14px; background: var(--glass-2);
+  border: 1px solid var(--glass-brd); border-radius: var(--radius-sm); transition: box-shadow var(--speed);
+}
+.fileitem:hover { box-shadow: var(--shadow-sm); }
+.fileitem.dragging { opacity: .5; }
+.fileitem .grip { cursor: grab; color: var(--text-muted); font-size: 15px; }
+.fileitem .fname { flex: 1; font-weight: 600; font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fileitem .fsize { color: var(--text-muted); font-size: 12.5px; }
+.fileitem .rm { cursor: pointer; color: var(--danger); font-weight: 800; padding: 3px 8px; border-radius: 8px; }
+.fileitem .rm:hover { background: rgba(224,69,90,.14); }
+
+.controls { display: flex; flex-wrap: wrap; gap: 18px; margin-top: 20px; align-items: flex-end; }
+.field { display: flex; flex-direction: column; gap: 7px; }
+.field label { font-size: 12.5px; font-weight: 700; color: var(--text-muted); }
+.field input[type="text"], .field input[type="number"], .field input[type="password"], .field select {
+  background: var(--glass-2); color: var(--text); border: 1px solid var(--glass-brd); border-radius: 11px; padding: 10px 13px;
+  font-size: 14px; outline: none; min-width: 160px; transition: border-color var(--speed), box-shadow var(--speed);
+}
+.field input:focus, .field select:focus { border-color: var(--brand); box-shadow: 0 0 0 4px rgba(59,110,245,.15); }
+.field.range input { min-width: 200px; }
+
+.btn {
+  border: none; border-radius: 13px; padding: 13px 24px; font-size: 14.5px; font-weight: 700; cursor: pointer; color: #fff;
+  background: var(--grad); display: inline-flex; align-items: center; gap: 8px;
+  box-shadow: 0 8px 20px rgba(59,110,245,.35), inset 0 1px 0 rgba(255,255,255,.25);
+  transition: transform var(--speed), box-shadow var(--speed), filter var(--speed);
+}
+.btn:hover { transform: translateY(-2px); box-shadow: 0 12px 28px rgba(59,110,245,.45); filter: brightness(1.05); }
+.btn:active { transform: translateY(0); }
+.btn:disabled { opacity: .5; cursor: not-allowed; transform: none; box-shadow: none; filter: grayscale(.3); }
+.btn.secondary { background: var(--glass-2); color: var(--text); border: 1px solid var(--glass-brd); box-shadow: var(--shadow-sm); }
+.btn.secondary:hover { color: var(--brand); box-shadow: var(--shadow-md); }
+.btn-row { display: flex; gap: 12px; margin-top: 22px; flex-wrap: wrap; }
+
+.progress-wrap { margin-top: 20px; display: none; }
+.progress-wrap.show { display: block; }
+.progress-bar { height: 12px; border-radius: 999px; background: var(--glass-2); overflow: hidden; border: 1px solid var(--glass-brd); }
+.progress-fill { height: 100%; width: 0%; background: var(--grad); transition: width .25s; box-shadow: 0 0 12px rgba(59,110,245,.5); }
+.progress-label { font-size: 13px; color: var(--text-muted); margin-top: 9px; font-weight: 500; }
+
+.result { margin-top: 16px; padding: 15px 18px; border-radius: var(--radius-sm); font-size: 14px; display: none; font-weight: 500; }
+.result.show { display: block; }
+.result.ok { background: rgba(15,185,138,.14); border: 1px solid var(--accent); }
+.result.err { background: rgba(224,69,90,.12); border: 1px solid var(--danger); }
+
+.toast {
+  position: fixed; bottom: 24px; right: 24px; z-index: 100; background: var(--glass-2);
+  -webkit-backdrop-filter: var(--blur); backdrop-filter: var(--blur); border: 1px solid var(--glass-brd);
+  border-left: 4px solid var(--accent); border-radius: 14px; padding: 14px 20px; box-shadow: var(--shadow-lg);
+  font-size: 14px; transform: translateY(24px); opacity: 0; transition: all .3s cubic-bezier(.2,.8,.2,1); max-width: 360px;
+}
+.toast.show { transform: translateY(0); opacity: 1; }
+.toast.err { border-left-color: var(--danger); }
+
+.thumbs { display: grid; grid-template-columns: repeat(auto-fill, minmax(128px, 1fr)); gap: 14px; margin-top: 18px; }
+.thumb {
+  position: relative; border: 1px solid var(--glass-brd); border-radius: 12px; overflow: hidden; background: var(--glass-2);
+  cursor: grab; box-shadow: var(--shadow-sm); transition: transform var(--speed), box-shadow var(--speed);
+}
+.thumb:hover { transform: translateY(-3px); box-shadow: var(--shadow-md); }
+.thumb.dragging { opacity: .4; }
+.thumb canvas, .thumb img { width: 100%; display: block; }
+.thumb .pg { position: absolute; bottom: 0; left: 0; right: 0; text-align: center; font-size: 11px; background: rgba(0,0,0,.6); color: #fff; padding: 3px; }
+.thumb .ops { position: absolute; top: 5px; right: 5px; display: flex; gap: 5px; }
+.thumb .ops span { width: 24px; height: 24px; border-radius: 8px; background: rgba(0,0,0,.62); color: #fff; display: grid; place-items: center; font-size: 12px; cursor: pointer; transition: background var(--speed); }
+.thumb .ops span:hover { background: var(--brand); }
+
+.footer {
+  margin: 16px; padding: 24px 30px; border-radius: var(--radius); background: var(--glass);
+  -webkit-backdrop-filter: var(--blur); backdrop-filter: var(--blur); border: 1px solid var(--glass-brd);
+  box-shadow: var(--shadow-md); color: var(--text-muted); font-size: 13px;
+}
+.footer-grid { display: flex; flex-wrap: wrap; gap: 26px; justify-content: space-between; align-items: center; }
+.firm-card { display: flex; flex-direction: column; gap: 3px; }
+.firm-card strong { color: var(--text); font-size: 14.5px; }
+.firm-card a { font-weight: 600; }
+.footer .disclaimer { max-width: 480px; font-size: 12.5px; }
+
+.outbox {
+  margin-top: 14px; background: var(--glass-2); border: 1px solid var(--glass-brd); border-radius: 12px; padding: 14px;
+  max-height: 380px; overflow: auto; font-family: ui-monospace, "Cascadia Code", Consolas, monospace; font-size: 12.5px;
+  white-space: pre-wrap; word-break: break-word;
+}
+
+.muted { color: var(--text-muted); }
+.hidden { display: none !important; }
+.pill { font-size: 11px; font-weight: 800; padding: 4px 11px; border-radius: 999px; color: #fff; background: var(--grad-accent); box-shadow: var(--shadow-sm); }
+
+@media (max-width: 900px) {
+  .sidebar { display: none; }
+  .search-box { min-width: 140px; }
+  .main { padding: 18px; }
+  .hero h1 { font-size: 23px; }
+}
+
+/* ---------- attachment preview ---------- */
+.preview-wrap { margin-top: 16px; }
+.preview-head { font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: .6px; color: var(--text-muted); margin: 4px 2px 10px; }
+.preview-file-label { font-weight: 700; font-size: 13px; margin: 12px 2px 8px; color: var(--text); }
+.preview-wrap .thumb { cursor: default; }
+.preview-wrap .thumb:hover { transform: none; box-shadow: var(--shadow-sm); }
+
+/* ---------- changelog ---------- */
+.cl-head { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; flex-wrap: wrap; }
+.cl-ver { font-weight: 800; font-size: 13px; color: #fff; background: var(--grad); padding: 4px 13px; border-radius: 999px; box-shadow: var(--shadow-sm); }
+.cl-title { font-weight: 700; font-size: 16.5px; }
+.cl-list { margin: 0; padding-left: 20px; }
+.cl-list li { margin: 6px 0; font-size: 14px; color: var(--text); line-height: 1.5; }
+
+/* ---------- version badge + update bar ---------- */
+.ver-badge { font-size: 10px; font-weight: 800; vertical-align: super; margin-left: 7px; padding: 2px 7px; border-radius: 999px; background: var(--glass-2); border: 1px solid var(--glass-brd); color: var(--brand); letter-spacing: .3px; }
+.update-bar { position: fixed; left: 50%; transform: translateX(-50%); bottom: 24px; z-index: 120; display: flex; align-items: center; gap: 14px; padding: 12px 14px 12px 20px; border-radius: 14px; background: var(--glass-2); -webkit-backdrop-filter: var(--blur); backdrop-filter: var(--blur); border: 1px solid var(--glass-brd); box-shadow: var(--shadow-lg); font-size: 14px; font-weight: 600; max-width: 92vw; }
+.update-bar .btn { padding: 9px 16px; font-size: 13.5px; }
+.update-x { cursor: pointer; color: var(--text-muted); font-weight: 800; padding: 2px 7px; border-radius: 8px; }
+.update-x:hover { color: var(--danger); background: rgba(224,69,90,.12); }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand-logo" onclick="ProPDF.go('home')">
+      <div class="brand-mark">P</div>
+      <div>
+        <div class="brand-name">Pro<span>PDF</span></div>
+        <div class="brand-tag">Your data never leaves your office</div>
+      </div>
+    </div>
+    <div class="topbar-spacer"></div>
+    <div class="search-box">
+      <span>🔍</span>
+      <input id="toolSearch" type="text" placeholder="Search tools…" oninput="ProPDF.filterTools(this.value)" />
+    </div>
+    <button class="icon-btn" id="themeBtn" title="Toggle dark / light mode" onclick="ProPDF.toggleTheme()">🌙</button>
+  </header>
+
+  <div class="privacy-banner">
+    <span class="dot"></span>
+    All files are processed locally on your computer. No documents are uploaded or shared with any external party.
+  </div>
+
+  <div class="layout">
+    <nav class="sidebar" id="sidebar"></nav>
+    <main class="main" id="main"></main>
+  </div>
+
+  <footer class="footer">
+    <div class="footer-grid">
+      <div class="firm-card">
+        <strong>Prepared by Kothari Jain &amp; Associates</strong>
+        <span>Mob: <a href="tel:+919096316155">+91 90963 16155</a></span>
+        <span>Email: <a href="mailto:info.kotharijain@gmail.com">info.kotharijain@gmail.com</a></span>
+      </div>
+      <div class="disclaimer">
+        <span class="pill">DPDP-aligned</span>
+        &nbsp;ProPDF runs entirely on your machine. No cloud. No telemetry. No tracking. Free to use and share.
+      </div>
+    </div>
+  </footer>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+/* ============================================================
+   ProPDF — on-demand library loader
+   Loads each library from the local /lib folder first (offline),
+   then falls back to cdnjs. Heavy libraries (OCR, Excel) load only
+   when the relevant tool is opened, keeping startup lean.
+   ============================================================ */
+(function () {
+  "use strict";
+
+  // version-pinned sources. local path is tried first.
+  var LIBS = {
+    pdfLib: {
+      global: "PDFLib",
+      local: "lib/pdf-lib.min.js",
+      cdn: "https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"
+    },
+    pdfjs: {
+      global: "pdfjsLib",
+      local: "lib/pdf.min.js",
+      cdn: "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js",
+      worker_local: "lib/pdf.worker.min.js",
+      worker_cdn: "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js"
+    },
+    jszip: {
+      global: "JSZip",
+      local: "lib/jszip.min.js",
+      cdn: "https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"
+    },
+    xlsx: {
+      global: "XLSX",
+      local: "lib/xlsx.full.min.js",
+      cdn: "https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"
+    },
+    tesseract: {
+      global: "Tesseract",
+      local: "lib/tesseract.min.js",
+      cdn: "https://cdnjs.cloudflare.com/ajax/libs/tesseract.js/5.1.0/tesseract.min.js"
+    }
+  };
+
+  var loaded = {};   // key -> Promise
+
+  function injectScript(src) {
+    return new Promise(function (resolve, reject) {
+      var s = document.createElement("script");
+      s.src = src;
+      s.async = true;
+      s.onload = function () { resolve(src); };
+      s.onerror = function () { reject(new Error("failed: " + src)); };
+      document.head.appendChild(s);
+    });
+  }
+
+  // try local, then cdn; resolve once `global` exists on window
+  function loadOne(key) {
+    if (loaded[key]) return loaded[key];
+    var cfg = LIBS[key];
+    if (!cfg) return Promise.reject(new Error("unknown lib " + key));
+
+    loaded[key] = injectScript(cfg.local)
+      .then(check(cfg.global))
+      .then(function () { cfg._from = "local"; })
+      .catch(function () {
+        return injectScript(cfg.cdn).then(check(cfg.global)).then(function () { cfg._from = "cdn"; });
+      })
+      .then(function () { return window[cfg.global]; });
+
+    return loaded[key];
+  }
+
+  function check(globalName) {
+    return function () {
+      if (!window[globalName]) throw new Error("global " + globalName + " missing");
+      return true;
+    };
+  }
+
+  // public: ensure a set of libs are present
+  function ensure() {
+    var keys = Array.prototype.slice.call(arguments);
+    return Promise.all(keys.map(loadOne)).then(function () {
+      // configure pdf.js worker if it was requested
+      if (keys.indexOf("pdfjs") !== -1 && window.pdfjsLib) {
+        var cfg = LIBS.pdfjs;
+        // use the worker from the SAME source the main library loaded from
+        // (avoids fetch(), which is blocked on the file:// protocol)
+        var src = (cfg._from === "cdn") ? cfg.worker_cdn : cfg.worker_local;
+        try { window.pdfjsLib.GlobalWorkerOptions.workerSrc = src; } catch (e) { /* ignore */ }
+      }
+    });
+  }
+
+  window.ProPDFLibs = { ensure: ensure };
+})();
+  </script>
+  <script>
+/* ============================================================
+   ProPDF — UI shell & utilities
+   Prepared by Kothari Jain & Associates
+   ============================================================ */
+(function () {
+  "use strict";
+
+  var App = {
+    tools: [],
+    groups: ["Convert to PDF", "Convert from PDF", "Organize", "Optimize & Secure", "OCR & Data"],
+    current: "home"
+  };
+
+  /* ---------------- tool registry ---------------- */
+  App.registerTool = function (def) { App.tools.push(def); };
+  App.getTool = function (id) { return App.tools.filter(function (t) { return t.id === id; })[0]; };
+
+  /* ---------------- DOM helpers ---------------- */
+  function el(tag, attrs, html) {
+    var e = document.createElement(tag);
+    if (attrs) for (var k in attrs) {
+      if (k === "class") e.className = attrs[k];
+      else if (k === "html") e.innerHTML = attrs[k];
+      else e.setAttribute(k, attrs[k]);
+    }
+    if (html != null) e.innerHTML = html;
+    return e;
+  }
+  App.el = el;
+
+  /* ---------------- theme ---------------- */
+  App.toggleTheme = function () {
+    var html = document.documentElement;
+    var next = html.getAttribute("data-theme") === "dark" ? "light" : "dark";
+    html.setAttribute("data-theme", next);
+    document.getElementById("themeBtn").textContent = next === "dark" ? "☀️" : "🌙";
+    try { window.localStorage.setItem("propdf-theme", next); } catch (e) {}
+  };
+  (function initTheme() {
+    var saved;
+    try { saved = window.localStorage.getItem("propdf-theme"); } catch (e) {}
+    if (saved) {
+      document.documentElement.setAttribute("data-theme", saved);
+    }
+  })();
+
+  /* ---------------- toast ---------------- */
+  var toastTimer;
+  App.toast = function (msg, isErr) {
+    var t = document.getElementById("toast");
+    t.textContent = msg;
+    t.className = "toast show" + (isErr ? " err" : "");
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { t.className = "toast"; }, 3800);
+  };
+
+  /* ---------------- file helpers ---------------- */
+  App.readAB = function (file) {
+    return new Promise(function (res, rej) {
+      var r = new FileReader();
+      r.onload = function () { res(r.result); };
+      r.onerror = rej;
+      r.readAsArrayBuffer(file);
+    });
+  };
+  App.fmtSize = function (b) {
+    if (b < 1024) return b + " B";
+    if (b < 1048576) return (b / 1024).toFixed(1) + " KB";
+    return (b / 1048576).toFixed(2) + " MB";
+  };
+  App.download = function (filename, data, mime) {
+    var blob = (data instanceof Blob) ? data : new Blob([data], { type: mime || "application/octet-stream" });
+    var url = URL.createObjectURL(blob);
+    var a = el("a", { href: url, download: filename });
+    document.body.appendChild(a); a.click();
+    setTimeout(function () { URL.revokeObjectURL(url); a.remove(); }, 1500);
+  };
+
+  /* ---------------- reusable file zone ----------------
+     opts: { multiple, accept, hint, onChange(files) }
+     returns { files: [], el, refresh() }
+  ---------------------------------------------------- */
+  App.fileZone = function (opts) {
+    opts = opts || {};
+    var state = { files: [] };
+    var wrap = el("div");
+    var dz = el("div", { class: "dropzone" });
+    dz.innerHTML =
+      '<div class="dz-icon">📂</div>' +
+      '<h4>Drag &amp; drop files here</h4>' +
+      '<p>' + (opts.hint || "or click to browse") + '</p>';
+    var input = el("input", { type: "file", style: "display:none" });
+    if (opts.multiple) input.setAttribute("multiple", "multiple");
+    if (opts.accept) input.setAttribute("accept", opts.accept);
+    var list = el("div", { class: "filelist" });
+    var previewWrap = el("div", { class: "preview-wrap" });
+
+    function add(fileList) {
+      var arr = Array.prototype.slice.call(fileList);
+      if (!opts.multiple) { state.files = arr.slice(0, 1); }
+      else { state.files = state.files.concat(arr); }
+      render();
+      if (opts.onChange) opts.onChange(state.files);
+    }
+    function render() {
+      list.innerHTML = "";
+      state.files.forEach(function (f, i) {
+        var item = el("div", { class: "fileitem", draggable: opts.multiple ? "true" : "false" });
+        item.innerHTML =
+          (opts.multiple ? '<span class="grip">⠿</span>' : '') +
+          '<span class="fname">' + escapeHtml(f.name) + '</span>' +
+          '<span class="fsize">' + App.fmtSize(f.size) + '</span>' +
+          '<span class="rm" title="Remove">✕</span>';
+        item.querySelector(".rm").onclick = function () {
+          state.files.splice(i, 1); render();
+          if (opts.onChange) opts.onChange(state.files);
+        };
+        if (opts.multiple) enableRowDrag(item, i);
+        list.appendChild(item);
+      });
+      renderPreview();
+    }
+    function enableRowDrag(item, idx) {
+      item.addEventListener("dragstart", function (e) {
+        item.classList.add("dragging");
+        e.dataTransfer.setData("text/plain", idx);
+      });
+      item.addEventListener("dragend", function () { item.classList.remove("dragging"); });
+      item.addEventListener("dragover", function (e) { e.preventDefault(); });
+      item.addEventListener("drop", function (e) {
+        e.preventDefault();
+        var from = parseInt(e.dataTransfer.getData("text/plain"), 10);
+        if (isNaN(from) || from === idx) return;
+        var moved = state.files.splice(from, 1)[0];
+        state.files.splice(idx, 0, moved);
+        render();
+        if (opts.onChange) opts.onChange(state.files);
+      });
+    }
+
+    dz.onclick = function () { input.click(); };
+    input.onchange = function () { add(input.files); input.value = ""; };
+    dz.addEventListener("dragover", function (e) { e.preventDefault(); dz.classList.add("drag"); });
+    dz.addEventListener("dragleave", function () { dz.classList.remove("drag"); });
+    dz.addEventListener("drop", function (e) {
+      e.preventDefault(); dz.classList.remove("drag");
+      if (e.dataTransfer.files && e.dataTransfer.files.length) add(e.dataTransfer.files);
+    });
+
+    wrap.appendChild(dz);
+    wrap.appendChild(input);
+    wrap.appendChild(list);
+    wrap.appendChild(previewWrap);
+    state.el = wrap;
+    state.clear = function () { state.files = []; render(); };
+
+    function isPdf(f) { return /pdf$/i.test(f.type) || /\.pdf$/i.test(f.name); }
+    function isImg(f) { return /^image\//.test(f.type) || /\.(png|jpe?g|gif|webp|bmp)$/i.test(f.name); }
+    var previewToken = 0;
+    function renderPreview() {
+      if (opts.preview === false) return;
+      previewWrap.innerHTML = "";
+      if (!state.files.length) return;
+      if (!state.files.some(function (f) { return isPdf(f) || isImg(f); })) return;
+      var myToken = ++previewToken;
+      previewWrap.appendChild(el("div", { class: "preview-head" }, "Preview"));
+      var box = el("div"); previewWrap.appendChild(box);
+      var MAX = 60, shown = 0, multi = state.files.length > 1;
+      var needPdf = state.files.some(isPdf);
+      var prep = (needPdf && window.ProPDFLibs) ? window.ProPDFLibs.ensure("pdfjs") : Promise.resolve();
+      prep.then(function () {
+        return state.files.reduce(function (chain, f) {
+          return chain.then(function () {
+            if (myToken !== previewToken) return;
+            if (multi) box.appendChild(el("div", { class: "preview-file-label" }, "📄 " + escapeHtml(f.name)));
+            if (isImg(f)) {
+              var gi = el("div", { class: "thumbs" }); box.appendChild(gi);
+              var ti = el("div", { class: "thumb" });
+              var im = el("img"); im.src = URL.createObjectURL(f); ti.appendChild(im); gi.appendChild(ti);
+              shown++; return;
+            }
+            if (!isPdf(f)) return;
+            return App.readAB(f).then(function (ab) {
+              return window.pdfjsLib.getDocument({ data: ab }).promise.then(function (pdf) {
+                var g = el("div", { class: "thumbs" }); box.appendChild(g);
+                var n = pdf.numPages, i = 1;
+                function nextPage() {
+                  if (i > n || shown >= MAX || myToken !== previewToken) {
+                    if (n > MAX) box.appendChild(el("div", { class: "muted", style: "margin:8px 2px;font-size:12.5px" }, "Showing first " + MAX + " of " + n + " pages."));
+                    return;
+                  }
+                  return pdf.getPage(i).then(function (pg) {
+                    var vp = pg.getViewport({ scale: 0.3 });
+                    var t = el("div", { class: "thumb" });
+                    var c = el("canvas"); c.width = vp.width; c.height = vp.height;
+                    t.appendChild(c); t.appendChild(el("div", { class: "pg" }, "Page " + i));
+                    g.appendChild(t);
+                    return pg.render({ canvasContext: c.getContext("2d"), viewport: vp }).promise.then(function () { shown++; i++; return nextPage(); });
+                  });
+                }
+                return nextPage();
+              });
+            });
+          });
+        }, Promise.resolve());
+      }).catch(function () {});
+    }
+
+    return state;
+  };
+
+  /* ---------------- progress + result widgets ---------------- */
+  App.progressWidget = function () {
+    var wrap = el("div", { class: "progress-wrap" });
+    wrap.innerHTML =
+      '<div class="progress-bar"><div class="progress-fill"></div></div>' +
+      '<div class="progress-label"></div>';
+    var fill = wrap.querySelector(".progress-fill");
+    var label = wrap.querySelector(".progress-label");
+    return {
+      el: wrap,
+      show: function (msg) { wrap.classList.add("show"); if (msg) label.textContent = msg; },
+      set: function (pct, msg) { fill.style.width = Math.max(0, Math.min(100, pct)) + "%"; if (msg != null) label.textContent = msg; },
+      hide: function () { wrap.classList.remove("show"); fill.style.width = "0%"; }
+    };
+  };
+  App.resultWidget = function () {
+    var w = el("div", { class: "result" });
+    return {
+      el: w,
+      ok: function (msg) { w.className = "result show ok"; w.innerHTML = msg; },
+      err: function (msg) { w.className = "result show err"; w.innerHTML = "⚠️ " + msg; },
+      clear: function () { w.className = "result"; w.innerHTML = ""; }
+    };
+  };
+
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+    });
+  }
+  App.escapeHtml = escapeHtml;
+
+  /* parse page ranges like "1-3,5,8-10" into 0-based index array */
+  App.parseRanges = function (str, max) {
+    var out = [], seen = {};
+    String(str).split(",").forEach(function (part) {
+      part = part.trim(); if (!part) return;
+      var m = part.match(/^(\d+)\s*-\s*(\d+)$/);
+      if (m) {
+        var a = parseInt(m[1], 10), b = parseInt(m[2], 10);
+        if (a > b) { var t = a; a = b; b = t; }
+        for (var i = a; i <= b; i++) push(i);
+      } else if (/^\d+$/.test(part)) {
+        push(parseInt(part, 10));
+      }
+    });
+    function push(n) { if (n >= 1 && n <= max && !seen[n]) { seen[n] = 1; out.push(n - 1); } }
+    return out;
+  };
+
+  /* ---------------- navigation / rendering ---------------- */
+  App.go = function (id) {
+    App.current = id;
+    renderSidebar();
+    var main = document.getElementById("main");
+    main.innerHTML = "";
+    window.scrollTo(0, 0);
+    if (id === "home") return renderHome(main);
+    if (id === "changelog") return renderChangelog(main);
+    var tool = App.getTool(id);
+    if (!tool) return renderHome(main);
+
+    var head = el("div");
+    head.innerHTML =
+      '<div class="tool-head"><span class="back" onclick="ProPDF.go(\'home\')">← All tools</span></div>' +
+      '<div class="tool-head"><span style="font-size:26px">' + tool.emoji + '</span><h2>' + tool.name + '</h2>' +
+      (tool.status === "soon" ? ' <span class="pill" style="background:rgba(201,133,27,.16);color:var(--warning)">Roadmap</span>' : '') +
+      '</div>' +
+      '<p class="tool-sub">' + tool.long + '</p>';
+    main.appendChild(head);
+
+    var panel = el("div", { class: "panel" });
+    main.appendChild(panel);
+    if (tool.status === "soon" && !tool.render) {
+      panel.innerHTML = '<p class="muted">This capability is planned for the optional ProPDF Power Pack (local Python engine). ' +
+        'See the roadmap in <code>docs/ROADMAP.md</code>. The lean browser edition focuses on features that run fully client-side.</p>';
+      return;
+    }
+    try { tool.render(panel); }
+    catch (e) { panel.innerHTML = '<p class="result show err">Failed to load tool: ' + escapeHtml(e.message) + '</p>'; }
+  };
+
+  function renderSidebar() {
+    var sb = document.getElementById("sidebar");
+    sb.innerHTML = "";
+    var home = el("div", { class: "side-link" + (App.current === "home" ? " active" : "") }, '<span class="ic">🏠</span> Home');
+    home.onclick = function () { App.go("home"); };
+    sb.appendChild(home);
+    App.groups.forEach(function (g) {
+      sb.appendChild(el("div", { class: "side-group-title" }, g));
+      App.tools.filter(function (t) { return t.group === g; }).forEach(function (t) {
+        var link = el("div", { class: "side-link" + (App.current === t.id ? " active" : "") },
+          '<span class="ic">' + t.emoji + '</span> ' + t.name);
+        link.onclick = function () { App.go(t.id); };
+        sb.appendChild(link);
+      });
+    });
+    sb.appendChild(el("div", { class: "side-group-title" }, "About"));
+    var cl = el("div", { class: "side-link" + (App.current === "changelog" ? " active" : "") }, '<span class="ic">\ud83d\udd52</span> Changelog');
+    cl.onclick = function () { App.go("changelog"); };
+    sb.appendChild(cl);
+  }
+
+  var CHANGELOG = [
+    { v: "v9", title: "Compress to a target size", items: [
+      "Compress PDF now has a \u201cTarget file size\u201d mode \u2014 enter a limit in KB or MB (e.g. for GST / Income-Tax portals) and ProPDF automatically finds the best quality and resolution that stays under it.",
+      "Tells you the final size, and warns if the target is impossible without unreadable quality."
+    ] },
+    { v: "v8", title: "Cleanup & Changelog", items: [
+      "Removed the non-working Office → PDF and Password Protect placeholders.",
+      "Added this Changelog with the full version history."
+    ] },
+    { v: "v7", title: "File previews", items: [
+      "Page-thumbnail previews of the attached file in every tool (Split / Extract, Merge, Rotate, Compress, Watermark, Page Numbers, and all PDF → tools), each page numbered.",
+      "Merge shows each file's pages grouped under its name, in the current order.",
+      "Images → PDF previews the actual images before converting."
+    ] },
+    { v: "v6", title: "Far better PDF → Excel tables", items: [
+      "Columns are now anchored to the table's header row and each word is placed by position — so Client ID, Client Name, quantities and ISIN stay in their own columns even when names are long.",
+      "The table is automatically separated from the letterhead and signature text.",
+      "Rows whose content wrapped to a second line are merged back together; trailing rows are detected via their numeric columns.",
+      "Quantities saved as numbers; long IDs kept as text to avoid losing digits."
+    ] },
+    { v: "v5", title: "Automatic OCR for scans", items: [
+      "PDF → Excel now detects a scanned page (no text layer) and runs OCR automatically — no separate step.",
+      "OCR reads word positions via TSV with confidence filtering, and never produces a blank sheet.",
+      "The same auto-OCR fallback was added to PDF → Text and PDF → Word.",
+      "Added a per-tool OCR language selector (English plus Hindi, Marathi, Gujarati, Tamil, Telugu, Kannada, Bengali, Punjabi)."
+    ] },
+    { v: "v4", title: "One shareable file", items: [
+      "Repackaged the whole app into a single self-contained index.html — share just that one file.",
+      "Fixed start-up and file:// loading problems; added a cache-proof local launcher (Start ProPDF.bat)."
+    ] },
+    { v: "v3", title: "Modern redesign", items: [
+      "New Material + Glassmorphism interface: frosted-glass panels, animated gradient background, refined dark / light themes and hover effects."
+    ] },
+    { v: "v2", title: "Stability fix", items: [
+      "Fixed a critical bug where the tools failed to load, leaving buttons unresponsive — everything is clickable now."
+    ] },
+    { v: "v1", title: "First release", items: [
+      "100% local, DPDP-aligned PDF suite — no uploads, no cloud, no telemetry.",
+      "Convert to PDF (Images, Text / CSV) and from PDF (JPG/PNG, Text, HTML, Word, Excel).",
+      "Organize: Merge, Split / Extract, Rotate, Organize Pages.",
+      "Optimize & Secure: Compress, Watermark, Page Numbers, Unlock.",
+      "OCR (English + 10 Indian languages) and Smart Data Extract (PAN / GSTIN / TAN / CIN / DIN).",
+      "Dark / light mode, drag-and-drop, search and full documentation."
+    ] }
+  ];
+
+  function renderChangelog(main) {
+    var hero = el("div", { class: "hero" });
+    hero.innerHTML = '<h1>Changelog</h1><p>Version history of ProPDF — newest first. Current version: <strong>' + CHANGELOG[0].v + '</strong>.</p>';
+    main.appendChild(hero);
+    CHANGELOG.forEach(function (rel) {
+      var card = el("div", { class: "panel" });
+      var items = rel.items.map(function (it) { return '<li>' + escapeHtml(it) + '</li>'; }).join("");
+      card.innerHTML = '<div class="cl-head"><span class="cl-ver">' + rel.v + '</span><span class="cl-title">' + escapeHtml(rel.title) + '</span></div><ul class="cl-list">' + items + '</ul>';
+      main.appendChild(card);
+    });
+  }
+
+  function renderHome(main) {
+    var hero = el("div", { class: "hero" });
+    hero.innerHTML =
+      '<h1>Professional PDF Tools. Your Data Never Leaves Your Office.</h1>' +
+      '<p>A complete, DPDP-aligned PDF suite that runs entirely on your computer — no uploads, no cloud, ' +
+      'no telemetry. Built for Chartered Accountants, advocates, consultants and SMEs by ' +
+      '<strong>Kothari Jain &amp; Associates</strong>. Free to use and share.</p>';
+    main.appendChild(hero);
+
+    var q = (document.getElementById("toolSearch").value || "").toLowerCase();
+    App.groups.forEach(function (g) {
+      var items = App.tools.filter(function (t) {
+        return t.group === g && (!q || (t.name + " " + t.long).toLowerCase().indexOf(q) !== -1);
+      });
+      if (!items.length) return;
+      main.appendChild(el("div", { class: "section-title" }, g));
+      var grid = el("div", { class: "grid" });
+      items.forEach(function (t) {
+        var card = el("div", { class: "card" });
+        card.innerHTML =
+          '<div class="emoji">' + t.emoji + '</div>' +
+          '<h3>' + t.name + '</h3>' +
+          '<p>' + t.desc + '</p>' +
+          (t.status === "soon" ? '<span class="badge soon">Roadmap</span>'
+            : (t.badge ? '<span class="badge">' + t.badge + '</span>' : ''));
+        card.onclick = function () { App.go(t.id); };
+        grid.appendChild(card);
+      });
+      main.appendChild(grid);
+    });
+  }
+
+  App.filterTools = function () {
+    if (App.current === "home") App.go("home");
+  };
+
+  /* expose */
+  window.ProPDF = App;
+
+  /* ---------------- version + update check ---------------- */
+  App.VERSION = "v9";
+  function versionNum(v) { var m = String(v).match(/\d+/); return m ? parseInt(m[0], 10) : 0; }
+  function injectVersionBadge() {
+    var bn = document.querySelector(".brand-name");
+    if (bn && !bn.querySelector(".ver-badge")) bn.appendChild(el("span", { class: "ver-badge" }, App.VERSION));
+  }
+  function showUpdateBar(ver, notes) {
+    if (document.querySelector(".update-bar")) return;
+    var bar = el("div", { class: "update-bar" });
+    bar.appendChild(el("span", { class: "update-msg" }, "✨ ProPDF " + escapeHtml(ver) + " is available" + (notes ? " — " + escapeHtml(notes) : "")));
+    var b = el("button", { class: "btn" }, "Reload to update");
+    b.onclick = function () { location.href = location.pathname + "?u=" + Date.now(); };
+    var x = el("span", { class: "update-x", title: "Dismiss" }, "✕");
+    x.onclick = function () { bar.remove(); };
+    bar.appendChild(b); bar.appendChild(x);
+    document.body.appendChild(bar);
+  }
+  App.checkForUpdate = function () {
+    if (typeof location === "undefined" || !/^https?:/.test(location.protocol)) return;  // only when hosted online
+    fetch("version.json?_=" + Date.now(), { cache: "no-store" })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (j) { if (j && j.version && versionNum(j.version) > versionNum(App.VERSION)) showUpdateBar(j.version, j.notes || ""); })
+      .catch(function () {});
+  };
+
+  /* boot once tools.js has registered everything */
+  function boot() {
+    try { App.go("home"); injectVersionBadge(); App.checkForUpdate(); }
+    catch (e) { console.error("ProPDF boot error:", e); }
+  }
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot);
+  else boot();
+})();
+  </script>
+  <script>
+/* ============================================================
+   ProPDF — tool implementations (100% client-side)
+   Prepared by Kothari Jain & Associates
+   ============================================================ */
+(function () {
+  "use strict";
+  var P = window.ProPDF;
+  var L = window.ProPDFLibs;
+  var el = P.el;
+
+  /* ---------- small UI builders ---------- */
+  function row(html) { return el("div", { class: "controls" }, html); }
+  function field(label, inner) {
+    return '<div class="field"><label>' + label + '</label>' + inner + '</div>';
+  }
+  function actionUI(panel) {
+    var prog = P.progressWidget();
+    var res = P.resultWidget();
+    panel.appendChild(prog.el);
+    panel.appendChild(res.el);
+    return { prog: prog, res: res };
+  }
+  function btn(label, onclick, cls) {
+    var b = el("button", { class: "btn" + (cls ? " " + cls : "") }, label);
+    b.onclick = onclick;
+    return b;
+  }
+
+  /* ====================================================================
+     CONVERT TO PDF
+     ==================================================================== */
+
+  /* Images -> PDF */
+  P.registerTool({
+    id: "img2pdf", name: "Images → PDF", emoji: "🖼️", group: "Convert to PDF",
+    desc: "Combine JPG / PNG images into one PDF.",
+    long: "Combine one or more JPG / PNG images into a single, clean PDF — pages sized to each image.",
+    render: function (panel) {
+      var zone = P.fileZone({ multiple: true, accept: "image/png,image/jpeg", hint: "JPG / PNG — drag to reorder" });
+      panel.appendChild(zone.el);
+      var opts = row(
+        field("Page fit", '<select id="imgFit"><option value="image">Match image size</option><option value="a4">A4 page (centered)</option></select>') +
+        field("Margin (pt)", '<input id="imgMargin" type="number" value="0" min="0" max="120">')
+      );
+      panel.appendChild(opts);
+      var io = actionUI(panel);
+      var go = btn("Create PDF ▸", run);
+      panel.appendChild(el("div", { class: "btn-row" })).appendChild(go);
+
+      function run() {
+        if (!zone.files.length) return P.toast("Add at least one image", true);
+        io.res.clear(); io.prog.show("Loading engine…"); go.disabled = true;
+        var fit = document.getElementById("imgFit").value;
+        var margin = parseFloat(document.getElementById("imgMargin").value) || 0;
+        L.ensure("pdfLib").then(function () {
+          var PDFLib = window.PDFLib;
+          return PDFLib.PDFDocument.create().then(function (doc) {
+            var i = 0;
+            function next() {
+              if (i >= zone.files.length) {
+                io.prog.set(100, "Saving…");
+                return doc.save().then(function (bytes) {
+                  P.download("ProPDF_images.pdf", bytes, "application/pdf");
+                  io.prog.hide(); io.res.ok("Created PDF from " + zone.files.length + " image(s)."); go.disabled = false;
+                });
+              }
+              var f = zone.files[i];
+              io.prog.set((i / zone.files.length) * 100, "Adding image " + (i + 1) + " of " + zone.files.length);
+              return P.readAB(f).then(function (ab) {
+                var isPng = /png$/i.test(f.type) || /\.png$/i.test(f.name);
+                var embed = isPng ? doc.embedPng(ab) : doc.embedJpg(ab);
+                return embed.then(function (img) {
+                  var page;
+                  if (fit === "a4") {
+                    page = doc.addPage([595.28, 841.89]);
+                    var maxW = 595.28 - margin * 2, maxH = 841.89 - margin * 2;
+                    var sc = Math.min(maxW / img.width, maxH / img.height);
+                    var w = img.width * sc, h = img.height * sc;
+                    page.drawImage(img, { x: (595.28 - w) / 2, y: (841.89 - h) / 2, width: w, height: h });
+                  } else {
+                    page = doc.addPage([img.width + margin * 2, img.height + margin * 2]);
+                    page.drawImage(img, { x: margin, y: margin, width: img.width, height: img.height });
+                  }
+                  i++; return next();
+                });
+              });
+            }
+            return next();
+          });
+        }).catch(fail(io, go));
+      }
+    }
+  });
+
+  /* TXT / CSV -> PDF */
+  P.registerTool({
+    id: "txt2pdf", name: "Text / CSV → PDF", emoji: "📝", group: "Convert to PDF",
+    desc: "Turn .txt or .csv files into a formatted PDF.",
+    long: "Convert plain text or CSV files into a paginated, readable PDF with selectable text.",
+    render: function (panel) {
+      var zone = P.fileZone({ multiple: false, accept: ".txt,.csv,text/plain", hint: ".txt or .csv" });
+      panel.appendChild(zone.el);
+      var opts = row(
+        field("Font size", '<input id="txtSize" type="number" value="11" min="6" max="24">') +
+        field("Page", '<select id="txtPage"><option value="a4">A4</option><option value="letter">Letter</option></select>')
+      );
+      panel.appendChild(opts);
+      var io = actionUI(panel);
+      var go = btn("Create PDF ▸", run);
+      panel.appendChild(el("div", { class: "btn-row" })).appendChild(go);
+
+      function run() {
+        if (!zone.files.length) return P.toast("Add a text file", true);
+        io.res.clear(); io.prog.show("Loading engine…"); go.disabled = true;
+        var size = parseFloat(document.getElementById("txtSize").value) || 11;
+        var pageDim = document.getElementById("txtPage").value === "letter" ? [612, 792] : [595.28, 841.89];
+        Promise.all([L.ensure("pdfLib"), zone.files[0].text()]).then(function (r) {
+          var text = r[1]; var PDFLib = window.PDFLib;
+          return PDFLib.PDFDocument.create().then(function (doc) {
+            return doc.embedFont(PDFLib.StandardFonts.Courier).then(function (font) {
+              var margin = 48, lh = size * 1.45;
+              var maxChars = Math.floor((pageDim[0] - margin * 2) / (size * 0.6));
+              var lines = wrapLines(text.replace(/\t/g, "    ").split(/\r?\n/), maxChars);
+              var page, y;
+              function newPage() { page = doc.addPage(pageDim); y = pageDim[1] - margin; }
+              newPage();
+              lines.forEach(function (ln) {
+                if (y < margin) newPage();
+                page.drawText(ln, { x: margin, y: y, size: size, font: font, color: PDFLib.rgb(0.1, 0.13, 0.19) });
+                y -= lh;
+              });
+              io.prog.set(100, "Saving…");
+              return doc.save().then(function (bytes) {
+                P.download(zone.files[0].name.replace(/\.[^.]+$/, "") + ".pdf", bytes, "application/pdf");
+                io.prog.hide(); io.res.ok("Converted to PDF (" + lines.length + " lines)."); go.disabled = false;
+              });
+            });
+          });
+        }).catch(fail(io, go));
+      }
+      function wrapLines(arr, maxChars) {
+        var out = [];
+        arr.forEach(function (line) {
+          if (line.length <= maxChars) { out.push(line); return; }
+          for (var i = 0; i < line.length; i += maxChars) out.push(line.substr(i, maxChars));
+        });
+        return out;
+      }
+    }
+  });
+
+  /* ====================================================================
+     CONVERT FROM PDF
+     ==================================================================== */
+
+  /* shared: load a pdf.js doc from a File */
+  function loadPdfjs(file) {
+    return Promise.all([L.ensure("pdfjs"), P.readAB(file)]).then(function (r) {
+      return window.pdfjsLib.getDocument({ data: r[1] }).promise;
+    });
+  }
+
+  /* PDF -> JPG / PNG */
+  P.registerTool({
+    id: "pdf2img", name: "PDF → JPG / PNG", emoji: "🏞️", group: "Convert from PDF",
+    desc: "Render PDF pages to high-res images.",
+    long: "Render each PDF page to a high-resolution JPG or PNG image, downloaded as a ZIP.",
+    render: function (panel) {
+      var zone = P.fileZone({ accept: "application/pdf,.pdf", hint: "one PDF file" });
+      panel.appendChild(zone.el);
+      panel.appendChild(row(
+        field("Format", '<select id="imgfmt"><option value="image/jpeg">JPG</option><option value="image/png">PNG</option></select>') +
+        field("Resolution", '<select id="imgdpi"><option value="2">High (150 dpi)</option><option value="3">Very High (220 dpi)</option><option value="1.5">Standard (110 dpi)</option></select>')
+      ));
+      var io = actionUI(panel);
+      var go = btn("Convert ▸", run);
+      panel.appendChild(el("div", { class: "btn-row" })).appendChild(go);
+
+      function run() {
+        if (!zone.files.length) return P.toast("Add a PDF", true);
+        io.res.clear(); io.prog.show("Loading engine…"); go.disabled = true;
+        var fmt = document.getElementById("imgfmt").value;
+        var scale = parseFloat(document.getElementById("imgdpi").value);
+        var ext = fmt === "image/png" ? "png" : "jpg";
+        Promise.all([loadPdfjs(zone.files[0]), L.ensure("jszip")]).then(function (r) {
+          var pdf = r[0], zip = new window.JSZip(), n = pdf.numPages, i = 1;
+          function next() {
+            if (i > n) {
+              io.prog.set(100, "Zipping…");
+              return zip.generateAsync({ type: "blob" }).then(function (blob) {
+                P.download("ProPDF_images.zip", blob);
+                io.prog.hide(); io.res.ok("Exported " + n + " page(s) as " + ext.toUpperCase() + "."); go.disabled = false;
+              });
+            }
+            io.prog.set((i / n) * 100, "Rendering page " + i + " of " + n);
+            return pdf.getPage(i).then(function (page) {
+              var vp = page.getViewport({ scale: scale });
+              var c = document.createElement("canvas"); c.width = vp.width; c.height = vp.height;
+              return page.render({ canvasContext: c.getContext("2d"), viewport: vp }).promise.then(function () {
+                return new Promise(function (res) {
+                  c.toBlob(function (b) {
+                    zip.file("page-" + String(i).padStart(3, "0") + "." + ext, b);
+                    i++; res(next());
+                  }, fmt, 0.92);
+                });
+              });
+            });
+          }
+          return next();
+        }).catch(fail(io, go));
+      }
+    }
+  });
+
+  /* PDF -> TXT */
+  P.registerTool({
+    id: "pdf2txt", name: "PDF → Text", emoji: "🔤", group: "Convert from PDF",
+    desc: "Extract text — auto-OCR for scans.",
+    long: "Extracts selectable text from every page. If a page is scanned (no text layer), it automatically runs OCR — no separate step needed.",
+    render: function (panel) {
+      var zone = P.fileZone({ accept: "application/pdf,.pdf", hint: "text or scanned PDF" });
+      panel.appendChild(zone.el);
+      panel.appendChild(row(field("If scanned, OCR language", '<select id="ptxtLang">' + OCR_OPTS + '</select>')));
+      var io = actionUI(panel);
+      var out = el("div", { class: "outbox hidden" });
+      var go = btn("Extract text ▸", run);
+      var dl = btn("Download .txt", function () {
+        P.download((zone.files[0] ? zone.files[0].name.replace(/\.[^.]+$/, "") : "ProPDF") + ".txt", out.textContent, "text/plain");
+      }, "secondary");
+      dl.style.display = "none";
+      var br = el("div", { class: "btn-row" }); br.appendChild(go); br.appendChild(dl);
+      panel.appendChild(br); panel.appendChild(out);
+
+      function run() {
+        if (!zone.files.length) return P.toast("Add a PDF", true);
+        io.res.clear(); io.prog.show("Loading engine…"); go.disabled = true; dl.style.display = "none";
+        var langs = document.getElementById("ptxtLang").value || "eng";
+        var usedOcr = false;
+        loadPdfjs(zone.files[0]).then(function (pdf) {
+          var n = pdf.numPages, i = 1, parts = [];
+          function next() {
+            if (i > n) {
+              out.textContent = parts.join("\n\n"); out.classList.remove("hidden");
+              io.prog.hide(); io.res.ok("Extracted text from " + n + " page(s)" + (usedOcr ? " (OCR used for scanned pages)" : "") + "."); go.disabled = false; dl.style.display = "";
+              return;
+            }
+            io.prog.set(((i - 1) / n) * 100, "Reading page " + i + " of " + n);
+            return getPageContent(pdf, i, { langs: langs, onProgress: function (pr) { io.prog.set(((i - 1 + pr) / n) * 100, "OCR page " + i + " of " + n + " — " + Math.round(pr * 100) + "%"); } }).then(function (pc) {
+              if (pc.ocr) usedOcr = true;
+              parts.push("──── Page " + i + " ────\n" + pc.text);
+              i++; return next();
+            });
+          }
+          return next();
+        }).catch(fail(io, go));
+      }
+    }
+  });
+
+  /* PDF -> HTML */
+  P.registerTool({
+    id: "pdf2html", name: "PDF → HTML", emoji: "🌐", group: "Convert from PDF",
+    desc: "Export PDF text to a clean HTML file.",
+    long: "Produce a lightweight, readable HTML document from the PDF's text content.",
+    render: function (panel) {
+      var zone = P.fileZone({ accept: "application/pdf,.pdf", hint: "one PDF file" });
+      panel.appendChild(zone.el);
+      var io = actionUI(panel);
+      var go = btn("Convert ▸", run);
+      panel.appendChild(el("div", { class: "btn-row" })).appendChild(go);
+      function run() {
+        if (!zone.files.length) return P.toast("Add a PDF", true);
+        io.res.clear(); io.prog.show("Loading engine…"); go.disabled = true;
+        loadPdfjs(zone.files[0]).then(function (pdf) {
+          var n = pdf.numPages, i = 1, body = [];
+          function next() {
+            if (i > n) {
+              var html = '<!DOCTYPE html><html><head><meta charset="utf-8"><title>' +
+                P.escapeHtml(zone.files[0].name) + '</title><style>body{font-family:Segoe UI,Arial,sans-serif;max-width:820px;margin:40px auto;padding:0 20px;line-height:1.6;color:#1b2430}h2{border-bottom:1px solid #ddd;padding-bottom:6px;color:#1f6feb}p{white-space:pre-wrap}</style></head><body>' +
+                body.join("") + '<hr><p style="color:#888;font-size:12px">Generated by ProPDF — Kothari Jain &amp; Associates</p></body></html>';
+              P.download(zone.files[0].name.replace(/\.[^.]+$/, "") + ".html", html, "text/html");
+              io.prog.hide(); io.res.ok("Converted " + n + " page(s) to HTML."); go.disabled = false; return;
+            }
+            io.prog.set((i / n) * 100, "Converting page " + i);
+            return pdf.getPage(i).then(function (page) {
+              return page.getTextContent().then(function (tc) {
+                body.push("<h2>Page " + i + "</h2><p>" + P.escapeHtml(itemsToText(tc.items)) + "</p>");
+                i++; return next();
+              });
+            });
+          }
+          return next();
+        }).catch(fail(io, go));
+      }
+    }
+  });
+
+  /* PDF -> Word (.doc, Word-openable HTML) — auto-OCR */
+  P.registerTool({
+    id: "pdf2word", name: "PDF → Word", emoji: "📘", group: "Convert from PDF",
+    desc: "Editable Word — auto-OCR for scans.",
+    long: "Creates a Word-openable .doc from the PDF text. If a page is scanned, it automatically runs OCR first. (Layout-perfect .docx with images is on the Power Pack roadmap.)",
+    render: function (panel) {
+      var zone = P.fileZone({ accept: "application/pdf,.pdf", hint: "text or scanned PDF" });
+      panel.appendChild(zone.el);
+      panel.appendChild(row(field("If scanned, OCR language", '<select id="pwordLang">' + OCR_OPTS + '</select>')));
+      var io = actionUI(panel);
+      var go = btn("Convert ▸", run);
+      panel.appendChild(el("div", { class: "btn-row" })).appendChild(go);
+      function run() {
+        if (!zone.files.length) return P.toast("Add a PDF", true);
+        io.res.clear(); io.prog.show("Loading engine…"); go.disabled = true;
+        var langs = document.getElementById("pwordLang").value || "eng";
+        var usedOcr = false;
+        loadPdfjs(zone.files[0]).then(function (pdf) {
+          var n = pdf.numPages, i = 1, body = [];
+          function next() {
+            if (i > n) {
+              var doc = '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="utf-8"><style>body{font-family:Calibri,Arial;font-size:11pt}p{margin:0 0 8pt}</style></head><body>' +
+                body.join("") + '</body></html>';
+              P.download(zone.files[0].name.replace(/\.[^.]+$/, "") + ".doc", doc, "application/msword");
+              io.prog.hide(); io.res.ok("Converted " + n + " page(s)" + (usedOcr ? " (OCR used)" : "") + " — open in Microsoft Word."); go.disabled = false; return;
+            }
+            io.prog.set(((i - 1) / n) * 100, "Converting page " + i);
+            return getPageContent(pdf, i, { langs: langs, onProgress: function (pr) { io.prog.set(((i - 1 + pr) / n) * 100, "OCR page " + i + " of " + n + " — " + Math.round(pr * 100) + "%"); } }).then(function (pc) {
+              if (pc.ocr) usedOcr = true;
+              var txt = pc.text.split(/\r?\n/).map(function (l) { return "<p>" + P.escapeHtml(l) + "</p>"; }).join("");
+              body.push(txt + (i < n ? '<br clear="all" style="page-break-before:always">' : ""));
+              i++; return next();
+            });
+          }
+          return next();
+        }).catch(fail(io, go));
+      }
+    }
+  });
+
+  /* PDF -> Excel / CSV  (FLAGSHIP) — auto-OCR hybrid */
+  P.registerTool({
+    id: "pdf2excel", name: "PDF → Excel", emoji: "📊", group: "Convert from PDF", badge: "Flagship",
+    desc: "Smart table extraction to .xlsx / .csv.",
+    long: "Reconstructs tables from text positions — detects rows and columns and preserves alignment. If a page is scanned (no text), it automatically runs OCR and rebuilds the table, then exports a clean Excel workbook (one sheet per page) or CSV. No separate OCR step needed.",
+    render: function (panel) {
+      var zone = P.fileZone({ accept: "application/pdf,.pdf", hint: "one PDF file (text or scanned)" });
+      panel.appendChild(zone.el);
+      panel.appendChild(row(
+        field("Output", '<select id="xlfmt"><option value="xlsx">Excel (.xlsx)</option><option value="csv">CSV (.csv)</option></select>') +
+        field("If scanned, OCR language", '<select id="xlLang">' + OCR_OPTS + '</select>') +
+        field("Mode", '<select id="xlMode"><option value="auto">Auto-detect (OCR only if needed)</option><option value="ocr">Force OCR (treat as scanned)</option></select>')
+      ));
+      var io = actionUI(panel);
+      var go = btn("Extract to Excel ▸", run);
+      panel.appendChild(el("div", { class: "btn-row" })).appendChild(go);
+
+      function run() {
+        if (!zone.files.length) return P.toast("Add a PDF", true);
+        io.res.clear(); io.prog.show("Loading engine…"); go.disabled = true;
+        var asCsv = document.getElementById("xlfmt").value === "csv";
+        var langs = document.getElementById("xlLang").value || "eng";
+        var force = document.getElementById("xlMode").value === "ocr";
+        var usedOcr = false, totalCells = 0;
+        Promise.all([loadPdfjs(zone.files[0]), L.ensure("xlsx")]).then(function (r) {
+          var pdf = r[0], XLSX = window.XLSX, wb = XLSX.utils.book_new();
+          var n = pdf.numPages, i = 1, csvAll = [];
+          function emit(grid) {
+            grid.forEach(function (rw) { rw.forEach(function (c) { if (String(c).trim()) totalCells++; }); });
+            if (asCsv) {
+              csvAll.push("# Page " + i);
+              grid.forEach(function (rw) { csvAll.push(rw.map(csvCell).join(",")); });
+              csvAll.push("");
+            } else {
+              var ws = XLSX.utils.aoa_to_sheet(grid.length ? grid : [[""]]);
+              autoWidth(ws, grid, XLSX);
+              XLSX.utils.book_append_sheet(wb, ws, ("Page " + i).substr(0, 31));
+            }
+          }
+          function finish() {
+            io.prog.set(100, "Saving…");
+            var base = zone.files[0].name.replace(/\.[^.]+$/, "");
+            if (asCsv) P.download(base + ".csv", csvAll.join("\n"), "text/csv");
+            else {
+              var bytes = XLSX.write(wb, { bookType: "xlsx", type: "array" });
+              P.download(base + ".xlsx", bytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+            }
+            io.prog.hide();
+            if (totalCells === 0) io.res.err("No text could be read from this PDF. If it is a scanned image, set Mode = Force OCR and pick the right language, then try again.");
+            else io.res.ok("Extracted " + totalCells + " cells from " + n + " page(s)" + (usedOcr ? " (OCR used for scanned pages)" : "") + ".");
+            go.disabled = false;
+          }
+          function page() {
+            if (i > n) return finish();
+            io.prog.set(((i - 1) / n) * 100, "Analyzing page " + i + " of " + n + "…");
+            return getPageContent(pdf, i, {
+              force: force, langs: langs,
+              onProgress: function (pr) { io.prog.set(((i - 1 + pr) / n) * 100, "OCR page " + i + " of " + n + " — " + Math.round(pr * 100) + "%"); }
+            }).then(function (pc) {
+              if (pc.ocr) usedOcr = true;
+              var grid = (pc.words && pc.words.length) ? buildTable(pc.words) : [];
+              if (!grid.length) grid = pc.text ? pc.text.split(/\r?\n/).map(function (l) { return [l]; }) : [[""]];
+              emit(grid);
+              i++; return page();
+            });
+          }
+          return page();
+        }).catch(fail(io, go));
+      }
+    }
+  });
+
+  /* ====================================================================
+     ORGANIZE
+     ==================================================================== */
+
+  /* Merge */
+  P.registerTool({
+    id: "merge", name: "Merge PDFs", emoji: "🔗", group: "Organize",
+    desc: "Combine multiple PDFs; drag to reorder.",
+    long: "Combine several PDFs into one. Drag files to set the order before merging.",
+    render: function (panel) {
+      var zone = P.fileZone({ multiple: true, accept: "application/pdf,.pdf", hint: "two or more PDFs — drag to reorder" });
+      panel.appendChild(zone.el);
+      var io = actionUI(panel);
+      var go = btn("Merge ▸", run);
+      panel.appendChild(el("div", { class: "btn-row" })).appendChild(go);
+      function run() {
+        if (zone.files.length < 2) return P.toast("Add at least two PDFs", true);
+        io.res.clear(); io.prog.show("Loading engine…"); go.disabled = true;
+        L.ensure("pdfLib").then(function () {
+          var PDFLib = window.PDFLib;
+          return PDFLib.PDFDocument.create().then(function (out) {
+            var i = 0;
+            function next() {
+              if (i >= zone.files.length) {
+                io.prog.set(100, "Saving…");
+                return out.save().then(function (bytes) {
+                  P.download("ProPDF_merged.pdf", bytes, "application/pdf");
+                  io.prog.hide(); io.res.ok("Merged " + zone.files.length + " files into one PDF."); go.disabled = false;
+                });
+              }
+              io.prog.set((i / zone.files.length) * 100, "Merging file " + (i + 1));
+              return P.readAB(zone.files[i]).then(function (ab) {
+                return PDFLib.PDFDocument.load(ab, { ignoreEncryption: true }).then(function (src) {
+                  return out.copyPages(src, src.getPageIndices()).then(function (pages) {
+                    pages.forEach(function (p) { out.addPage(p); });
+                    i++; return next();
+                  });
+                });
+              });
+            }
+            return next();
+          });
+        }).catch(fail(io, go));
+      }
+    }
+  });
+
+  /* Split / extract */
+  P.registerTool({
+    id: "split", name: "Split / Extract", emoji: "✂️", group: "Organize",
+    desc: "Split by range, every N pages, or extract.",
+    long: "Split a PDF by page ranges, every N pages, or extract specific pages. Outputs a ZIP when multiple files are produced.",
+    render: function (panel) {
+      var zone = P.fileZone({ accept: "application/pdf,.pdf", hint: "one PDF file" });
+      panel.appendChild(zone.el);
+      panel.appendChild(row(
+        field("Mode", '<select id="spMode" onchange="ProPDF._spMode()"><option value="ranges">Extract pages / ranges</option><option value="every">Every N pages</option><option value="single">One file per page</option></select>') +
+        field("Pages (e.g. 1-3,5,8)", '<input id="spRanges" type="text" placeholder="1-3,5,8-10">') +
+        field("N (pages per file)", '<input id="spN" type="number" value="1" min="1" style="display:none">')
+      ));
+      P._spMode = function () {
+        var m = document.getElementById("spMode").value;
+        document.getElementById("spRanges").parentNode.style.display = m === "ranges" ? "" : "none";
+        document.getElementById("spN").style.display = m === "every" ? "" : "none";
+      };
+      var io = actionUI(panel);
+      var go = btn("Split ▸", run);
+      panel.appendChild(el("div", { class: "btn-row" })).appendChild(go);
+
+      function run() {
+        if (!zone.files.length) return P.toast("Add a PDF", true);
+        io.res.clear(); io.prog.show("Loading engine…"); go.disabled = true;
+        var mode = document.getElementById("spMode").value;
+        Promise.all([L.ensure("pdfLib"), P.readAB(zone.files[0])]).then(function (r) {
+          var PDFLib = window.PDFLib;
+          return PDFLib.PDFDocument.load(r[1], { ignoreEncryption: true }).then(function (src) {
+            var total = src.getPageCount();
+            var groups = [];
+            if (mode === "ranges") {
+              var idx = P.parseRanges(document.getElementById("spRanges").value, total);
+              if (!idx.length) throw new Error("No valid pages in range.");
+              groups.push(idx);
+            } else if (mode === "every") {
+              var nn = parseInt(document.getElementById("spN").value, 10) || 1;
+              for (var s = 0; s < total; s += nn) {
+                var g = []; for (var k = s; k < Math.min(s + nn, total); k++) g.push(k); groups.push(g);
+              }
+            } else {
+              for (var p = 0; p < total; p++) groups.push([p]);
+            }
+            return makeDocs(PDFLib, src, groups, io, go);
+          });
+        }).catch(fail(io, go));
+      }
+      function makeDocs(PDFLib, src, groups, io, go) {
+        var base = zone.files[0].name.replace(/\.[^.]+$/, "");
+        if (groups.length === 1) {
+          return PDFLib.PDFDocument.create().then(function (d) {
+            return d.copyPages(src, groups[0]).then(function (pg) {
+              pg.forEach(function (p) { d.addPage(p); });
+              return d.save().then(function (b) {
+                P.download(base + "_extract.pdf", b, "application/pdf");
+                io.prog.hide(); io.res.ok("Extracted " + groups[0].length + " page(s)."); go.disabled = false;
+              });
+            });
+          });
+        }
+        return L.ensure("jszip").then(function () {
+          var zip = new window.JSZip(), gi = 0;
+          function next() {
+            if (gi >= groups.length) {
+              io.prog.set(100, "Zipping…");
+              return zip.generateAsync({ type: "blob" }).then(function (blob) {
+                P.download(base + "_split.zip", blob);
+                io.prog.hide(); io.res.ok("Created " + groups.length + " files."); go.disabled = false;
+              });
+            }
+            io.prog.set((gi / groups.length) * 100, "Building file " + (gi + 1) + " of " + groups.length);
+            return PDFLib.PDFDocument.create().then(function (d) {
+              return d.copyPages(src, groups[gi]).then(function (pg) {
+                pg.forEach(function (p) { d.addPage(p); });
+                return d.save().then(function (b) {
+                  zip.file(base + "_part" + String(gi + 1).padStart(3, "0") + ".pdf", b);
+                  gi++; return next();
+                });
+              });
+            });
+          }
+          return next();
+        });
+      }
+    }
+  });
+
+  /* Rotate */
+  P.registerTool({
+    id: "rotate", name: "Rotate PDF", emoji: "🔄", group: "Organize",
+    desc: "Rotate all or selected pages.",
+    long: "Rotate the whole document or specific pages by 90°, 180° or 270°.",
+    render: function (panel) {
+      var zone = P.fileZone({ accept: "application/pdf,.pdf", hint: "one PDF file" });
+      panel.appendChild(zone.el);
+      panel.appendChild(row(
+        field("Angle", '<select id="rotAngle"><option value="90">90° clockwise</option><option value="180">180°</option><option value="270">270° (90° CCW)</option></select>') +
+        field("Pages (blank = all)", '<input id="rotPages" type="text" placeholder="all, or 1-3,5">')
+      ));
+      var io = actionUI(panel);
+      var go = btn("Rotate ▸", run);
+      panel.appendChild(el("div", { class: "btn-row" })).appendChild(go);
+      function run() {
+        if (!zone.files.length) return P.toast("Add a PDF", true);
+        io.res.clear(); io.prog.show("Loading engine…"); go.disabled = true;
+        var ang = parseInt(document.getElementById("rotAngle").value, 10);
+        Promise.all([L.ensure("pdfLib"), P.readAB(zone.files[0])]).then(function (r) {
+          var PDFLib = window.PDFLib;
+          return PDFLib.PDFDocument.load(r[1], { ignoreEncryption: true }).then(function (doc) {
+            var pages = doc.getPages();
+            var sel = document.getElementById("rotPages").value.trim();
+            var idx = sel ? P.parseRanges(sel, pages.length) : pages.map(function (_, i) { return i; });
+            idx.forEach(function (i) {
+              var cur = pages[i].getRotation().angle || 0;
+              pages[i].setRotation(PDFLib.degrees((cur + ang) % 360));
+            });
+            io.prog.set(100, "Saving…");
+            return doc.save().then(function (b) {
+              P.download(zone.files[0].name.replace(/\.[^.]+$/, "") + "_rotated.pdf", b, "application/pdf");
+              io.prog.hide(); io.res.ok("Rotated " + idx.length + " page(s)."); go.disabled = false;
+            });
+          });
+        }).catch(fail(io, go));
+      }
+    }
+  });
+
+  /* Organize pages (thumbnails: reorder/delete/duplicate) */
+  P.registerTool({
+    id: "organize", name: "Organize Pages", emoji: "🗂️", group: "Organize",
+    desc: "Reorder, delete or duplicate pages.",
+    long: "Visual page management — drag thumbnails to reorder, delete unwanted pages, or duplicate pages, then rebuild the PDF.",
+    render: function (panel) {
+      var order = [];     // array of source page indices (0-based)
+      var srcAB = null;
+      var pdfDoc = null;
+
+      var zone = P.fileZone({ accept: "application/pdf,.pdf", hint: "one PDF file", preview: false, onChange: load });
+      panel.appendChild(zone.el);
+      var thumbs = el("div", { class: "thumbs" });
+      panel.appendChild(thumbs);
+      var io = actionUI(panel);
+      var go = btn("Save reorganized PDF ▸", save); go.disabled = true;
+      panel.appendChild(el("div", { class: "btn-row" })).appendChild(go);
+
+      function load(files) {
+        if (!files.length) return;
+        io.res.clear(); thumbs.innerHTML = ""; go.disabled = true; io.prog.show("Rendering thumbnails…");
+        P.readAB(files[0]).then(function (ab) {
+          srcAB = ab.slice(0);
+          return L.ensure("pdfjs").then(function () { return window.pdfjsLib.getDocument({ data: ab }).promise; });
+        }).then(function (pdf) {
+          pdfDoc = pdf;
+          order = [];
+          for (var k = 0; k < pdf.numPages; k++) order.push(k);
+          io.prog.hide(); go.disabled = false;
+          redraw(pdf);
+        }).catch(fail(io, go));
+      }
+
+      function redraw(pdf) {
+        thumbs.innerHTML = "";
+        order.forEach(function (srcIdx, pos) {
+          var t = el("div", { class: "thumb", draggable: "true" });
+          var c = el("canvas");
+          t.appendChild(c);
+          t.appendChild(el("div", { class: "pg" }, "Page " + (srcIdx + 1)));
+          var ops = el("div", { class: "ops" });
+          ops.innerHTML = '<span title="Duplicate">⧉</span><span title="Delete">✕</span>';
+          ops.children[0].onclick = function (e) { e.stopPropagation(); order.splice(pos + 1, 0, srcIdx); redraw(pdf); };
+          ops.children[1].onclick = function (e) { e.stopPropagation(); order.splice(pos, 1); redraw(pdf); };
+          t.appendChild(ops);
+          // render
+          pdf.getPage(srcIdx + 1).then(function (page) {
+            var vp = page.getViewport({ scale: 0.3 });
+            c.width = vp.width; c.height = vp.height;
+            page.render({ canvasContext: c.getContext("2d"), viewport: vp });
+          });
+          // drag reorder
+          t.addEventListener("dragstart", function (e) { t.classList.add("dragging"); e.dataTransfer.setData("text/plain", pos); });
+          t.addEventListener("dragend", function () { t.classList.remove("dragging"); });
+          t.addEventListener("dragover", function (e) { e.preventDefault(); });
+          t.addEventListener("drop", function (e) {
+            e.preventDefault();
+            var from = parseInt(e.dataTransfer.getData("text/plain"), 10);
+            if (isNaN(from) || from === pos) return;
+            var m = order.splice(from, 1)[0]; order.splice(pos, 0, m); redraw(pdf);
+          });
+          thumbs.appendChild(t);
+        });
+      }
+
+      function save() {
+        if (!srcAB || !order.length) return P.toast("Load a PDF and keep at least one page", true);
+        io.res.clear(); io.prog.show("Building PDF…"); go.disabled = true;
+        L.ensure("pdfLib").then(function () {
+          var PDFLib = window.PDFLib;
+          return PDFLib.PDFDocument.load(srcAB.slice(0), { ignoreEncryption: true }).then(function (src) {
+            return PDFLib.PDFDocument.create().then(function (out) {
+              return out.copyPages(src, order).then(function (pages) {
+                pages.forEach(function (p) { out.addPage(p); });
+                return out.save().then(function (b) {
+                  P.download("ProPDF_organized.pdf", b, "application/pdf");
+                  io.prog.hide(); io.res.ok("Saved PDF with " + order.length + " page(s)."); go.disabled = false;
+                });
+              });
+            });
+          });
+        }).catch(fail(io, go));
+      }
+    }
+  });
+
+  /* ====================================================================
+     OPTIMIZE & SECURE
+     ==================================================================== */
+
+  /* Compress — quality preset OR target file size */
+  P.registerTool({
+    id: "compress", name: "Compress PDF", emoji: "🗜️", group: "Optimize & Secure",
+    desc: "Reduce size, or hit a target size (KB/MB).",
+    long: "Reduces file size by re-rendering pages as optimized JPEG images. Use a quality preset, or set a target size (e.g. for GST / Income-Tax portals) and ProPDF automatically finds the best quality that stays under your limit. Produces an image-based PDF (run OCR afterwards if you need selectable text).",
+    render: function (panel) {
+      var zone = P.fileZone({ accept: "application/pdf,.pdf", hint: "one PDF file" });
+      panel.appendChild(zone.el);
+      panel.appendChild(row(
+        field("Mode", '<select id="cpMode" onchange="ProPDF._cpMode()"><option value="preset">Quality preset</option><option value="target">Target file size</option></select>') +
+        field("Compression", '<select id="cpLevel"><option value="0.5,1.5">High (smallest)</option><option value="0.7,2" selected>Medium (balanced)</option><option value="0.85,2.5">Low (best quality)</option></select>') +
+        field("Target size", '<input id="cpTarget" type="number" value="500" min="10" step="10" style="display:none;width:110px">') +
+        field("Unit", '<select id="cpUnit" style="display:none"><option value="1024">KB</option><option value="1048576">MB</option></select>')
+      ));
+      P._cpMode = function () {
+        var t = document.getElementById("cpMode").value === "target";
+        document.getElementById("cpLevel").parentNode.style.display = t ? "none" : "";
+        document.getElementById("cpTarget").style.display = t ? "" : "none";
+        document.getElementById("cpUnit").style.display = t ? "" : "none";
+      };
+      var io = actionUI(panel);
+      var go = btn("Compress ▸", run);
+      panel.appendChild(el("div", { class: "btn-row" })).appendChild(go);
+
+      function dataUrlBytes(u) { var i = u.indexOf(","); return Math.floor((u.length - i - 1) * 0.75); }
+      function buildPdf(PDFLib, pages, q) {
+        return PDFLib.PDFDocument.create().then(function (out) {
+          return pages.reduce(function (ch, pg) {
+            return ch.then(function () {
+              var url = pg.canvas.toDataURL("image/jpeg", q);
+              return out.embedJpg(url).then(function (img) {
+                var p = out.addPage([pg.w, pg.h]);
+                p.drawImage(img, { x: 0, y: 0, width: pg.w, height: pg.h });
+              });
+            });
+          }, Promise.resolve()).then(function () { return out.save(); });
+        });
+      }
+      function downscale(pages, f) {
+        if (f >= 0.999) return pages;
+        return pages.map(function (pg) {
+          var c = document.createElement("canvas");
+          c.width = Math.max(1, Math.round(pg.canvas.width * f));
+          c.height = Math.max(1, Math.round(pg.canvas.height * f));
+          c.getContext("2d").drawImage(pg.canvas, 0, 0, c.width, c.height);
+          return { canvas: c, w: pg.w, h: pg.h };
+        });
+      }
+      function estimate(pages, q) {
+        var s = 0; pages.forEach(function (pg) { s += dataUrlBytes(pg.canvas.toDataURL("image/jpeg", q)); });
+        return s + 1400 * pages.length + 800;
+      }
+
+      function run() {
+        if (!zone.files.length) return P.toast("Add a PDF", true);
+        var target = document.getElementById("cpMode").value === "target";
+        io.res.clear(); io.prog.show("Loading engine…"); go.disabled = true;
+        var origSize = zone.files[0].size;
+        var base = zone.files[0].name.replace(/\.[^.]+$/, "");
+        Promise.all([loadPdfjs(zone.files[0]), L.ensure("pdfLib")]).then(function (r) {
+          var pdf = r[0], PDFLib = window.PDFLib;
+          if (!target) return presetMode(pdf, PDFLib);
+          return targetMode(pdf, PDFLib);
+        }).catch(fail(io, go));
+
+        function presetMode(pdf, PDFLib) {
+          var parts = document.getElementById("cpLevel").value.split(",");
+          var quality = parseFloat(parts[0]), scale = parseFloat(parts[1]);
+          return PDFLib.PDFDocument.create().then(function (out) {
+            var n = pdf.numPages, i = 1;
+            function next() {
+              if (i > n) {
+                io.prog.set(100, "Saving…");
+                return out.save().then(function (bytes) {
+                  P.download(base + "_compressed.pdf", bytes, "application/pdf");
+                  var pct = Math.max(0, Math.round((1 - bytes.length / origSize) * 100));
+                  io.prog.hide();
+                  io.res.ok("Compressed: " + P.fmtSize(origSize) + " → " + P.fmtSize(bytes.length) + (pct > 0 ? " (−" + pct + "%)" : " (already optimized)") + ".");
+                  go.disabled = false;
+                });
+              }
+              io.prog.set((i / n) * 100, "Compressing page " + i + " of " + n);
+              return pdf.getPage(i).then(function (page) {
+                var vp = page.getViewport({ scale: scale });
+                var c = document.createElement("canvas"); c.width = vp.width; c.height = vp.height;
+                return page.render({ canvasContext: c.getContext("2d"), viewport: vp }).promise.then(function () {
+                  return out.embedJpg(c.toDataURL("image/jpeg", quality)).then(function (img) {
+                    var pw = vp.width / scale, ph = vp.height / scale;
+                    out.addPage([pw, ph]).drawImage(img, { x: 0, y: 0, width: pw, height: ph });
+                    i++; return next();
+                  });
+                });
+              });
+            }
+            return next();
+          });
+        }
+
+        function targetMode(pdf, PDFLib) {
+          var tnum = parseFloat(document.getElementById("cpTarget").value) || 0;
+          var unit = parseFloat(document.getElementById("cpUnit").value);
+          var targetBytes = tnum * unit;
+          if (targetBytes < 5000) { io.prog.hide(); go.disabled = false; return io.res.err("Please enter a sensible target size."); }
+          // render once at a high base scale, then search by downscaling + re-encoding
+          var n = pdf.numPages, i = 1, pages = [];
+          function render() {
+            if (i > n) return search();
+            io.prog.set((i / n) * 50, "Rendering page " + i + " of " + n + "…");
+            return pdf.getPage(i).then(function (page) {
+              var vp1 = page.getViewport({ scale: 1 });
+              var vp = page.getViewport({ scale: 2.0 });
+              var c = document.createElement("canvas"); c.width = vp.width; c.height = vp.height;
+              return page.render({ canvasContext: c.getContext("2d"), viewport: vp }).promise.then(function () {
+                pages.push({ canvas: c, w: vp1.width, h: vp1.height });
+                i++; return render();
+              });
+            });
+          }
+          function search() {
+            io.prog.set(60, "Finding best quality for " + P.fmtSize(targetBytes) + "…");
+            var factors = [1, 0.8, 0.65, 0.5, 0.4, 0.3, 0.22, 0.16];
+            function tryFactor(idx) {
+              if (idx >= factors.length) {
+                var dsl = downscale(pages, factors[factors.length - 1]);
+                return buildPdf(PDFLib, dsl, 0.3).then(function (b) { return { bytes: b, fit: false }; });
+              }
+              var ds = downscale(pages, factors[idx]);
+              if (estimate(ds, 0.32) > targetBytes) return tryFactor(idx + 1);
+              var lo = 0.32, hi = 0.92;
+              for (var k = 0; k < 7; k++) { var mid = (lo + hi) / 2; if (estimate(ds, mid) <= targetBytes) lo = mid; else hi = mid; }
+              return buildPdf(PDFLib, ds, lo).then(function (b) {
+                if (b.length <= targetBytes) return { bytes: b, fit: true };
+                var q2 = Math.max(0.3, lo - 0.1);
+                return buildPdf(PDFLib, ds, q2).then(function (b2) {
+                  return (b2.length <= targetBytes) ? { bytes: b2, fit: true } : { bytes: (b2.length < b.length ? b2 : b), fit: false };
+                });
+              });
+            }
+            return tryFactor(0).then(function (res) {
+              io.prog.set(100, "Saving…");
+              P.download(base + "_compressed.pdf", res.bytes, "application/pdf");
+              io.prog.hide();
+              if (res.fit) io.res.ok("Done: " + P.fmtSize(origSize) + " → " + P.fmtSize(res.bytes.length) + " (under your " + P.fmtSize(targetBytes) + " limit).");
+              else io.res.err("Smallest achievable was " + P.fmtSize(res.bytes.length) + " — below " + P.fmtSize(targetBytes) + " was not possible without unreadable quality. Saved the smallest version.");
+              go.disabled = false;
+            });
+          }
+          return render();
+        }
+      }
+    }
+  });
+
+  /* Watermark */
+  P.registerTool({
+    id: "watermark", name: "Watermark PDF", emoji: "💧", group: "Optimize & Secure",
+    desc: "Add a text watermark with custom opacity.",
+    long: "Stamp a diagonal text watermark across every page with adjustable opacity, size and colour.",
+    render: function (panel) {
+      var zone = P.fileZone({ accept: "application/pdf,.pdf", hint: "one PDF file" });
+      panel.appendChild(zone.el);
+      panel.appendChild(row(
+        field("Text", '<input id="wmText" type="text" value="CONFIDENTIAL">') +
+        field("Opacity", '<input id="wmOp" type="number" value="0.15" min="0.02" max="1" step="0.05">') +
+        field("Font size", '<input id="wmSize" type="number" value="60" min="10" max="200">') +
+        field("Colour", '<input id="wmColor" type="text" value="#1f6feb" placeholder="#rrggbb">')
+      ));
+      var io = actionUI(panel);
+      var go = btn("Apply watermark ▸", run);
+      panel.appendChild(el("div", { class: "btn-row" })).appendChild(go);
+      function run() {
+        if (!zone.files.length) return P.toast("Add a PDF", true);
+        var text = document.getElementById("wmText").value || "CONFIDENTIAL";
+        var op = parseFloat(document.getElementById("wmOp").value) || 0.15;
+        var size = parseFloat(document.getElementById("wmSize").value) || 60;
+        var col = hexRgb(document.getElementById("wmColor").value);
+        io.res.clear(); io.prog.show("Loading engine…"); go.disabled = true;
+        Promise.all([L.ensure("pdfLib"), P.readAB(zone.files[0])]).then(function (r) {
+          var PDFLib = window.PDFLib;
+          return PDFLib.PDFDocument.load(r[1], { ignoreEncryption: true }).then(function (doc) {
+            return doc.embedFont(PDFLib.StandardFonts.HelveticaBold).then(function (font) {
+              doc.getPages().forEach(function (page) {
+                var w = page.getWidth(), h = page.getHeight();
+                page.drawText(text, {
+                  x: w * 0.12, y: h * 0.42, size: size, font: font,
+                  color: PDFLib.rgb(col[0], col[1], col[2]), opacity: op,
+                  rotate: PDFLib.degrees(45)
+                });
+              });
+              io.prog.set(100, "Saving…");
+              return doc.save().then(function (b) {
+                P.download(zone.files[0].name.replace(/\.[^.]+$/, "") + "_watermarked.pdf", b, "application/pdf");
+                io.prog.hide(); io.res.ok("Watermarked " + doc.getPageCount() + " page(s)."); go.disabled = false;
+              });
+            });
+          });
+        }).catch(fail(io, go));
+      }
+    }
+  });
+
+  /* Page numbers */
+  P.registerTool({
+    id: "pagenum", name: "Add Page Numbers", emoji: "🔢", group: "Optimize & Secure",
+    desc: "Stamp page numbers / footer text.",
+    long: "Add page numbers (and optional footer text) to every page, positioned bottom-centre.",
+    render: function (panel) {
+      var zone = P.fileZone({ accept: "application/pdf,.pdf", hint: "one PDF file" });
+      panel.appendChild(zone.el);
+      panel.appendChild(row(
+        field("Format", '<select id="pnFmt"><option value="n">1, 2, 3…</option><option value="nofm">Page 1 of N</option></select>') +
+        field("Footer prefix (optional)", '<input id="pnPre" type="text" placeholder="e.g. Kothari Jain &amp; Associates">')
+      ));
+      var io = actionUI(panel);
+      var go = btn("Add numbers ▸", run);
+      panel.appendChild(el("div", { class: "btn-row" })).appendChild(go);
+      function run() {
+        if (!zone.files.length) return P.toast("Add a PDF", true);
+        var fmt = document.getElementById("pnFmt").value;
+        var pre = document.getElementById("pnPre").value || "";
+        io.res.clear(); io.prog.show("Loading engine…"); go.disabled = true;
+        Promise.all([L.ensure("pdfLib"), P.readAB(zone.files[0])]).then(function (r) {
+          var PDFLib = window.PDFLib;
+          return PDFLib.PDFDocument.load(r[1], { ignoreEncryption: true }).then(function (doc) {
+            return doc.embedFont(PDFLib.StandardFonts.Helvetica).then(function (font) {
+              var pages = doc.getPages(), N = pages.length;
+              pages.forEach(function (page, i) {
+                var label = fmt === "nofm" ? ("Page " + (i + 1) + " of " + N) : String(i + 1);
+                if (pre) label = pre + "   •   " + label;
+                var w = page.getWidth(), tw = font.widthOfTextAtSize(label, 9);
+                page.drawText(label, { x: (w - tw) / 2, y: 22, size: 9, font: font, color: PDFLib.rgb(0.35, 0.4, 0.48) });
+              });
+              io.prog.set(100, "Saving…");
+              return doc.save().then(function (b) {
+                P.download(zone.files[0].name.replace(/\.[^.]+$/, "") + "_numbered.pdf", b, "application/pdf");
+                io.prog.hide(); io.res.ok("Numbered " + N + " page(s)."); go.disabled = false;
+              });
+            });
+          });
+        }).catch(fail(io, go));
+      }
+    }
+  });
+
+  /* Unlock (remove owner restrictions where file opens without user password) */
+  P.registerTool({
+    id: "unlock", name: "Unlock PDF", emoji: "🔓", group: "Optimize & Secure",
+    desc: "Remove owner restrictions you're entitled to.",
+    long: "Removes owner-level permission restrictions (print/copy/edit limits) from PDFs you have the right to modify. Files locked with a strong user (open) password cannot be opened without it — by design.",
+    render: function (panel) {
+      var zone = P.fileZone({ accept: "application/pdf,.pdf", hint: "one PDF file" });
+      panel.appendChild(zone.el);
+      var io = actionUI(panel);
+      var go = btn("Remove restrictions ▸", run);
+      panel.appendChild(el("div", { class: "btn-row" })).appendChild(go);
+      panel.appendChild(el("p", { class: "muted", style: "margin-top:12px;font-size:12.5px" },
+        "Only use this on documents you own or are authorised to modify."));
+      function run() {
+        if (!zone.files.length) return P.toast("Add a PDF", true);
+        io.res.clear(); io.prog.show("Loading engine…"); go.disabled = true;
+        Promise.all([L.ensure("pdfLib"), P.readAB(zone.files[0])]).then(function (r) {
+          var PDFLib = window.PDFLib;
+          return PDFLib.PDFDocument.load(r[1], { ignoreEncryption: true }).then(function (src) {
+            // rebuild a clean doc to drop encryption dictionary
+            return PDFLib.PDFDocument.create().then(function (out) {
+              return out.copyPages(src, src.getPageIndices()).then(function (pages) {
+                pages.forEach(function (p) { out.addPage(p); });
+                return out.save().then(function (b) {
+                  P.download(zone.files[0].name.replace(/\.[^.]+$/, "") + "_unlocked.pdf", b, "application/pdf");
+                  io.prog.hide(); io.res.ok("Restrictions removed. Saved an unrestricted copy."); go.disabled = false;
+                });
+              });
+            });
+          });
+        }).catch(function (e) {
+          io.prog.hide(); go.disabled = false;
+          io.res.err("Could not open this file — it is likely protected with an open password, which cannot be bypassed.");
+        });
+      }
+    }
+  });
+
+  /* ====================================================================
+     OCR & DATA
+     ==================================================================== */
+
+  var OCR_LANGS = [
+    ["eng", "English"], ["hin", "Hindi"], ["mar", "Marathi"], ["guj", "Gujarati"],
+    ["tam", "Tamil"], ["tel", "Telugu"], ["kan", "Kannada"], ["mal", "Malayalam"],
+    ["pan", "Punjabi"], ["ben", "Bengali"], ["urd", "Urdu"]
+  ];
+
+  P.registerTool({
+    id: "ocr", name: "OCR (Scanned → Text)", emoji: "👁️", group: "OCR & Data", badge: "Multi-lingual",
+    desc: "Recognise text in scanned PDFs / images.",
+    long: "Runs Tesseract OCR locally to read scanned PDFs and images. Supports English plus 10 Indian languages, including mixed-language documents. Outputs editable text. (Language data downloads once from CDN, then is cached.)",
+    render: function (panel) {
+      var zone = P.fileZone({ accept: "application/pdf,.pdf,image/*", hint: "scanned PDF or image" });
+      panel.appendChild(zone.el);
+      var langOpts = OCR_LANGS.map(function (l) {
+        return '<label style="display:inline-flex;gap:5px;align-items:center;margin:3px 10px 3px 0;font-weight:500">' +
+          '<input type="checkbox" class="ocrLang" value="' + l[0] + '"' + (l[0] === "eng" ? " checked" : "") + '> ' + l[1] + '</label>';
+      }).join("");
+      panel.appendChild(el("div", { class: "field", style: "margin-top:16px" },
+        '<label>Languages (tick all that appear in the document)</label><div>' + langOpts + '</div>'));
+      var io = actionUI(panel);
+      var out = el("div", { class: "outbox hidden" });
+      var go = btn("Run OCR ▸", run);
+      var dl = btn("Download .txt", function () {
+        P.download("ProPDF_ocr.txt", out.textContent, "text/plain");
+      }, "secondary"); dl.style.display = "none";
+      var br = el("div", { class: "btn-row" }); br.appendChild(go); br.appendChild(dl);
+      panel.appendChild(br); panel.appendChild(out);
+
+      function selectedLangs() {
+        var v = [].slice.call(document.querySelectorAll(".ocrLang:checked")).map(function (c) { return c.value; });
+        return v.length ? v.join("+") : "eng";
+      }
+      function run() {
+        if (!zone.files.length) return P.toast("Add a file", true);
+        io.res.clear(); out.classList.add("hidden"); dl.style.display = "none";
+        io.prog.show("Loading OCR engine (first run downloads language data)…"); go.disabled = true;
+        var langs = selectedLangs();
+        var f = zone.files[0];
+        var isPdf = /pdf$/i.test(f.type) || /\.pdf$/i.test(f.name);
+        L.ensure("tesseract").then(function () {
+          if (isPdf) return ocrPdf(f, langs);
+          return ocrImage(f, langs);
+        }).then(function (text) {
+          out.textContent = text; out.classList.remove("hidden");
+          io.prog.hide(); io.res.ok("OCR complete."); go.disabled = false; dl.style.display = "";
+        }).catch(fail(io, go));
+      }
+
+      function ocrImage(file, langs) {
+        return blobUrl(file).then(function (url) {
+          return window.Tesseract.recognize(url, langs, {
+            logger: function (m) { if (m.status === "recognizing text") io.prog.set(m.progress * 100, "Recognising… " + Math.round(m.progress * 100) + "%"); }
+          }).then(function (res) { URL.revokeObjectURL(url); return res.data.text; });
+        });
+      }
+      function ocrPdf(file, langs) {
+        return loadPdfjs(file).then(function (pdf) {
+          var n = pdf.numPages, i = 1, parts = [];
+          function next() {
+            if (i > n) return parts.join("\n\n");
+            return pdf.getPage(i).then(function (page) {
+              var vp = page.getViewport({ scale: 2.2 });
+              var c = document.createElement("canvas"); c.width = vp.width; c.height = vp.height;
+              return page.render({ canvasContext: c.getContext("2d"), viewport: vp }).promise.then(function () {
+                io.prog.set(((i - 1) / n) * 100, "OCR page " + i + " of " + n + "…");
+                return window.Tesseract.recognize(c, langs, {
+                  logger: function (m) {
+                    if (m.status === "recognizing text")
+                      io.prog.set(((i - 1 + m.progress) / n) * 100, "OCR page " + i + " of " + n + " — " + Math.round(m.progress * 100) + "%");
+                  }
+                }).then(function (res) {
+                  parts.push("──── Page " + i + " ────\n" + res.data.text);
+                  i++; return next();
+                });
+              });
+            });
+          }
+          return next();
+        });
+      }
+    }
+  });
+
+  /* Smart data extract (regex-based) */
+  P.registerTool({
+    id: "extract", name: "Smart Data Extract", emoji: "🧠", group: "OCR & Data", badge: "AI-assist",
+    desc: "Pull PAN, GSTIN, TAN, CIN, amounts, dates.",
+    long: "Scans the PDF text and intelligently pulls out key Indian tax/business identifiers — PAN, GSTIN, TAN, CIN, DIN — plus dates, invoice numbers and amounts, into a tidy table.",
+    render: function (panel) {
+      var zone = P.fileZone({ accept: "application/pdf,.pdf", hint: "one PDF file (text-based)" });
+      panel.appendChild(zone.el);
+      var io = actionUI(panel);
+      var out = el("div", { class: "outbox hidden" });
+      var go = btn("Extract data ▸", run);
+      var dlx = btn("Download .xlsx", null, "secondary"); dlx.style.display = "none";
+      var br = el("div", { class: "btn-row" }); br.appendChild(go); br.appendChild(dlx);
+      panel.appendChild(br); panel.appendChild(out);
+      var lastFields = null;
+
+      function run() {
+        if (!zone.files.length) return P.toast("Add a PDF", true);
+        io.res.clear(); out.classList.add("hidden"); dlx.style.display = "none";
+        io.prog.show("Loading engine…"); go.disabled = true;
+        loadPdfjs(zone.files[0]).then(function (pdf) {
+          var n = pdf.numPages, i = 1, text = "";
+          function next() {
+            if (i > n) return text;
+            return pdf.getPage(i).then(function (page) {
+              return page.getTextContent().then(function (tc) {
+                text += " " + tc.items.map(function (it) { return it.str; }).join(" ");
+                io.prog.set((i / n) * 100, "Scanning page " + i); i++; return next();
+              });
+            });
+          }
+          return next();
+        }).then(function (text) {
+          var fields = extractFields(text);
+          lastFields = fields;
+          var html = "<b>Extracted fields</b>\n\n" + fields.map(function (f) {
+            return f[0].padEnd(16) + ": " + (f[1].length ? f[1].join(", ") : "—");
+          }).join("\n");
+          out.textContent = html.replace(/<\/?b>/g, ""); out.classList.remove("hidden");
+          io.prog.hide(); io.res.ok("Extraction complete. Review values below."); go.disabled = false;
+          dlx.style.display = "";
+          dlx.onclick = function () {
+            L.ensure("xlsx").then(function () {
+              var XLSX = window.XLSX;
+              var aoa = [["Field", "Value(s)"]].concat(fields.map(function (f) { return [f[0], f[1].join(", ")]; }));
+              var ws = XLSX.utils.aoa_to_sheet(aoa);
+              ws["!cols"] = [{ wch: 18 }, { wch: 60 }];
+              var wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, "Extracted");
+              var bytes = XLSX.write(wb, { bookType: "xlsx", type: "array" });
+              P.download("ProPDF_extracted.xlsx", bytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+            });
+          };
+        }).catch(fail(io, go));
+      }
+    }
+  });
+
+  /* ====================================================================
+     shared helpers
+     ==================================================================== */
+
+  function fail(io, go) {
+    return function (e) {
+      console.error(e);
+      io.prog.hide(); if (go) go.disabled = false;
+      io.res.err((e && e.message) ? e.message : "Something went wrong. If this is a scanned PDF, try the OCR tool.");
+    };
+  }
+  function blobUrl(file) { return Promise.resolve(URL.createObjectURL(file)); }
+  function hexRgb(hex) {
+    hex = (hex || "#1f6feb").replace("#", "");
+    if (hex.length === 3) hex = hex.split("").map(function (c) { return c + c; }).join("");
+    var n = parseInt(hex, 16);
+    return [((n >> 16) & 255) / 255, ((n >> 8) & 255) / 255, (n & 255) / 255];
+  }
+  function csvCell(v) {
+    v = v == null ? "" : String(v);
+    return /[",\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v;
+  }
+
+  /* turn pdf.js text items into readable, line-broken text */
+  function itemsToText(items) {
+    if (!items.length) return "";
+    var lines = clusterLines(items, 3);
+    return lines.map(function (ln) {
+      return ln.items.sort(function (a, b) { return a.x - b.x; }).map(function (it) { return it.str; }).join(" ").replace(/\s+/g, " ").trim();
+    }).filter(function (s) { return s.length; }).join("\n");
+  }
+
+  /* cluster text items into lines by y position */
+  function clusterLines(items, tol) {
+    var rows = [];
+    items.forEach(function (it) {
+      if (!it.str || !it.str.trim()) return;
+      var x = it.transform[4], y = it.transform[5];
+      var found = null;
+      for (var i = 0; i < rows.length; i++) {
+        if (Math.abs(rows[i].y - y) <= tol) { found = rows[i]; break; }
+      }
+      if (!found) { found = { y: y, items: [] }; rows.push(found); }
+      found.items.push({ x: x, str: it.str });
+    });
+    rows.sort(function (a, b) { return b.y - a.y; }); // top to bottom
+    return rows;
+  }
+
+  /* build a 2D grid (rows x columns) from text items — table reconstruction */
+  function buildGrid(items, rowTol, colGap) {
+    var lines = clusterLines(items, rowTol);
+    if (!lines.length) return [];
+    // collect column anchor x-positions across the whole page
+    var anchors = [];
+    lines.forEach(function (ln) {
+      ln.items.sort(function (a, b) { return a.x - b.x; });
+      ln.items.forEach(function (it) { anchors.push(it.x); });
+    });
+    anchors.sort(function (a, b) { return a - b; });
+    // cluster anchors into columns
+    var cols = [];
+    anchors.forEach(function (x) {
+      if (!cols.length || x - cols[cols.length - 1] > colGap) cols.push(x);
+    });
+    // assign each item to nearest column
+    return lines.map(function (ln) {
+      var rowArr = new Array(cols.length).fill("");
+      ln.items.forEach(function (it) {
+        var ci = nearestCol(cols, it.x);
+        rowArr[ci] = (rowArr[ci] ? rowArr[ci] + " " : "") + it.str.trim();
+      });
+      return rowArr.map(coerce);
+    }).filter(function (r) { return r.some(function (c) { return String(c).trim().length; }); });
+  }
+  function nearestCol(cols, x) {
+    var best = 0, bd = Infinity;
+    for (var i = 0; i < cols.length; i++) { var d = Math.abs(cols[i] - x); if (d < bd) { bd = d; best = i; } }
+    return best;
+  }
+  /* preserve numbers/dates as values */
+  function coerce(s) {
+    s = String(s).trim();
+    if (!s) return "";
+    var num = s.replace(/,/g, "").replace(/₹|Rs\.?/gi, "").trim();
+    if (/^-?\d+(\.\d+)?$/.test(num)) {
+      if (/^\d{13,}$/.test(num)) return s;   // keep long identifiers (DP/Client/DRN/account nos) as text
+      var n = parseFloat(num); if (!isNaN(n)) return n;
+    }
+    return s;
+  }
+
+  /* ---- median helper ---- */
+  function medianOf(a) { var s = a.slice().sort(function (x, y) { return x - y; }); return s[Math.floor(s.length / 2)] || 0; }
+
+  /* ---- render a pdf.js page to a canvas at given scale ---- */
+  function rasterizePage(page, scale) {
+    var vp = page.getViewport({ scale: scale });
+    var c = document.createElement("canvas"); c.width = vp.width; c.height = vp.height;
+    return page.render({ canvasContext: c.getContext("2d"), viewport: vp }).promise.then(function () { return c; });
+  }
+
+  /* ---- pdf.js text items -> word boxes {x,y(top),w,h,str} ---- */
+  function itemsToWords(items, pageH) {
+    var out = [];
+    items.forEach(function (it) {
+      if (!it.str || !it.str.trim()) return;
+      var h = it.height || Math.hypot(it.transform[2], it.transform[3]) || 10;
+      var x = it.transform[4];
+      var yTop = pageH - it.transform[5] - h;
+      out.push({ x: x, y: yTop, w: it.width || it.str.length * h * 0.5, h: h, str: it.str });
+    });
+    return out;
+  }
+
+  /* shared OCR language <option> list */
+  var OCR_OPTS = '<option value="eng">English</option><option value="eng+hin">English + Hindi</option><option value="eng+mar">English + Marathi</option><option value="eng+guj">English + Gujarati</option><option value="eng+tam">English + Tamil</option><option value="eng+tel">English + Telugu</option><option value="eng+kan">English + Kannada</option><option value="eng+ben">English + Bengali</option><option value="eng+pan">English + Punjabi</option>';
+
+  /* ---- run Tesseract on a canvas; returns data (text + tsv + blocks + hocr where available) ---- */
+  function recognizeCanvas(canvas, langs, onProgress) {
+    var T = window.Tesseract;
+    var logger = function (m) { if (onProgress && m.status === "recognizing text") onProgress(m.progress || 0); };
+    var output = { text: true, blocks: true, tsv: true, hocr: true };
+    // Preferred: worker API (reliably supports tsv/blocks output)
+    if (T && typeof T.createWorker === "function") {
+      return Promise.resolve().then(function () { return T.createWorker(langs, 1, { logger: logger }); }).then(function (worker) {
+        var ready = (worker.loadLanguage && worker.initialize)   // v4 path
+          ? Promise.resolve(worker.load ? worker.load() : null)
+              .then(function () { return worker.loadLanguage(langs); })
+              .then(function () { return worker.initialize(langs); })
+          : Promise.resolve();                                   // v5 auto-loads
+        return ready
+          .then(function () { return worker.recognize(canvas, {}, output); })
+          .then(function (res) {
+            var data = res.data;
+            return Promise.resolve(worker.terminate ? worker.terminate() : null).then(function () { return data; }, function () { return data; });
+          });
+      }).catch(function () {
+        return T.recognize(canvas, langs, { logger: logger }).then(function (res) { return res.data; });
+      });
+    }
+    return T.recognize(canvas, langs, { logger: logger }).then(function (res) { return res.data; });
+  }
+
+  /* ---- parse Tesseract TSV into word boxes (filtering low-confidence noise) ---- */
+  function parseTsv(tsv) {
+    var out = [], lines = tsv.split(/\r?\n/);
+    for (var i = 0; i < lines.length; i++) {
+      var c = lines[i].split("\t");
+      if (c.length >= 12 && c[0] === "5") {
+        var conf = parseFloat(c[10]); var t = c[11];
+        if (!t || !t.trim()) continue;
+        if (!isNaN(conf) && conf < 30) continue;
+        out.push({ x: +c[6], y: +c[7], w: +c[8], h: +c[9], str: t.trim() });
+      }
+    }
+    return out;
+  }
+
+  /* ---- parse hOCR words ---- */
+  function parseHocr(h) {
+    var out = [], re = /<span[^>]*class=['"]ocrx_word['"][^>]*title=['"]([^'"]*)['"][^>]*>([\s\S]*?)<\/span>/g, m;
+    while ((m = re.exec(h))) {
+      var bb = m[1].match(/bbox (\d+) (\d+) (\d+) (\d+)/), wc = m[1].match(/x_wconf (\d+)/);
+      if (!bb) continue;
+      if (wc && +wc[1] < 30) continue;
+      var txt = m[2].replace(/<[^>]+>/g, "").replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&#39;/g, "'").replace(/&quot;/g, '"').trim();
+      if (txt) out.push({ x: +bb[1], y: +bb[2], w: (+bb[3]) - (+bb[1]), h: (+bb[4]) - (+bb[2]), str: txt });
+    }
+    return out;
+  }
+
+  /* ---- Tesseract result -> word boxes (TSV -> blocks -> hOCR) ---- */
+  function ocrWordsFromData(data) {
+    if (!data) return [];
+    if (typeof data.tsv === "string" && data.tsv.indexOf("\t") >= 0) {
+      var wt = parseTsv(data.tsv); if (wt.length) return wt;
+    }
+    var raw = collectOcrWords(data);
+    if (raw.length) {
+      var wb = raw.map(function (w) {
+        var b = w.bbox || {};
+        return { x: b.x0 || 0, y: b.y0 || 0, w: (b.x1 - b.x0) || 0, h: (b.y1 - b.y0) || 10, str: (w.text || "").trim(), conf: (w.confidence != null ? w.confidence : 100) };
+      }).filter(function (w) { return w.str && w.conf >= 30; });
+      if (wb.length) return wb;
+    }
+    if (typeof data.hocr === "string" && data.hocr.indexOf("ocrx_word") >= 0) {
+      var wh = parseHocr(data.hocr); if (wh.length) return wh;
+    }
+    return [];
+  }
+  function collectOcrWords(data) {
+    if (data && data.words && data.words.length) return data.words;
+    var out = [];
+    function walk(node) {
+      if (!node) return;
+      if (node.words && node.words.length) node.words.forEach(function (w) { out.push(w); });
+      ["blocks", "paragraphs", "lines", "children"].forEach(function (k) {
+        if (node[k] && node[k].length) node[k].forEach(walk);
+      });
+    }
+    if (data && data.blocks && data.blocks.length) data.blocks.forEach(walk);
+    if (!out.length && data && data.lines && data.lines.length)
+      data.lines.forEach(function (l) { if (l.words) l.words.forEach(function (w) { out.push(w); }); });
+    return out;
+  }
+
+  /* ---- get a page's content; auto-OCR if there is no text layer ----
+     opts: { force, langs, scale, onProgress(fraction) }
+     resolves { text, words, ocr } ---- */
+  function getPageContent(pdf, pageNum, opts) {
+    opts = opts || {};
+    return pdf.getPage(pageNum).then(function (pg) {
+      var vp = pg.getViewport({ scale: 1 });
+      return pg.getTextContent().then(function (tc) {
+        var textLen = tc.items.reduce(function (a, it) { return a + (it.str ? it.str.trim().length : 0); }, 0);
+        var needOcr = opts.force || textLen < 20;
+        if (!needOcr) return { text: itemsToText(tc.items), words: itemsToWords(tc.items, vp.height), ocr: false };
+        return L.ensure("tesseract").then(function () {
+          return rasterizePage(pg, opts.scale || 2.5).then(function (canvas) {
+            return recognizeCanvas(canvas, opts.langs || "eng", opts.onProgress).then(function (data) {
+              return { text: (data.text || "").trim(), words: ocrWordsFromData(data), ocr: true };
+            });
+          });
+        });
+      });
+    });
+  }
+
+  /* ---- table reconstruction ----
+     rows by vertical clustering; columns anchored to the modal-width (header) row;
+     each word assigned to a column by position; table region isolated from prose
+     (expanded downward for wrapped rows); continuation lines merged upward. ---- */
+  function isNumVal(v) { return typeof v === "number"; }
+  function buildTable(words) {
+    if (!words || !words.length) return [];
+    var medH = medianOf(words.map(function (w) { return w.h; })) || 10;
+    var rowTol = medH * 0.7;
+    words.forEach(function (w) { w.cy = w.y + w.h / 2; w.x1 = w.x + w.w; });
+    var ws = words.slice().sort(function (a, b) { return a.cy - b.cy; });
+    var rows = [], cur = [ws[0]];
+    for (var i = 1; i < ws.length; i++) {
+      var ref = cur.reduce(function (s, w) { return s + w.cy; }, 0) / cur.length;
+      if (Math.abs(ws[i].cy - ref) <= rowTol) cur.push(ws[i]);
+      else { rows.push(cur); cur = [ws[i]]; }
+    }
+    rows.push(cur);
+    rows.forEach(function (r) { r.sort(function (a, b) { return a.x - b.x; }); });
+
+    var gaps = [];
+    rows.forEach(function (r) { for (var k = 1; k < r.length; k++) gaps.push(r[k].x - r[k - 1].x1); });
+    var medGap = medianOf(gaps.filter(function (g) { return g > 0; })) || medH;
+    var gapThresh = Math.max(medH * 1.0, medGap * 1.8);
+
+    function cellsOf(r) {
+      var cells = [], c = [r[0]];
+      for (var k = 1; k < r.length; k++) { if (r[k].x - r[k - 1].x1 > gapThresh) { cells.push(c); c = [r[k]]; } else c.push(r[k]); }
+      cells.push(c);
+      return cells.map(function (cc) { return { x0: cc[0].x, x1: cc[cc.length - 1].x1 }; });
+    }
+    var rowCells = rows.map(cellsOf);
+
+    var counts = {};
+    rowCells.forEach(function (c) { if (c.length >= 4) counts[c.length] = (counts[c.length] || 0) + 1; });
+    var modal = 0, best = -1;
+    Object.keys(counts).forEach(function (k) { var n = +k; if (counts[n] > best || (counts[n] === best && n > modal)) { best = counts[n]; modal = n; } });
+    if (!modal) return rows.map(function (r) { return [coerce(r.map(function (w) { return w.str; }).join(" "))]; });
+
+    var strong = [];
+    rowCells.forEach(function (c, i) { if (c.length >= modal - 1) strong.push(i); });
+    var tmplIdx = null;
+    for (var si = 0; si < strong.length; si++) { if (rowCells[strong[si]].length === modal) { tmplIdx = strong[si]; break; } }
+    if (tmplIdx == null) tmplIdx = strong[0];
+    var tmpl = rowCells[tmplIdx];
+    var bounds = [-1e9];
+    for (var bi = 1; bi < tmpl.length; bi++) bounds.push((tmpl[bi - 1].x1 + tmpl[bi].x0) / 2);
+    bounds.push(1e9);
+    var colCount = tmpl.length;
+    function colOf(cx) { for (var k = 0; k < colCount; k++) if (cx >= bounds[k] && cx < bounds[k + 1]) return k; return colCount - 1; }
+
+    var rowArrs = rows.map(function (r) {
+      var arr = new Array(colCount).fill("");
+      r.forEach(function (w) { var k = colOf(w.x + w.w / 2); arr[k] = (arr[k] ? arr[k] + " " : "") + w.str; });
+      return arr.map(coerce);
+    });
+
+    // numeric columns (from strong rows) help detect trailing table rows
+    var numCnt = new Array(colCount).fill(0);
+    strong.forEach(function (i) { rowArrs[i].forEach(function (v, k) { if (isNumVal(v)) numCnt[k]++; }); });
+    var numericCols = numCnt.map(function (c) { return c >= 2; });
+    function filledCount(a) { return a.filter(function (v) { return String(v).trim(); }).length; }
+    function numericHit(a) { return a.some(function (v, k) { return numericCols[k] && isNumVal(v); }); }
+
+    var tStart = Math.min.apply(null, strong), tEnd = Math.max.apply(null, strong);
+    for (var ei = tEnd + 1; ei < rows.length; ei++) {
+      if (filledCount(rowArrs[ei]) >= 2 && numericHit(rowArrs[ei])) tEnd = ei; else break;
+    }
+
+    var out = [], lastTbl = null;
+    rows.forEach(function (r, idx) {
+      if (idx < tStart || idx > tEnd) { out.push([coerce(r.map(function (w) { return w.str; }).join(" "))]); lastTbl = null; return; }
+      var arr = rowArrs[idx];
+      if (lastTbl && !String(arr[0]).trim()) {   // continuation line -> merge into previous row
+        for (var k = 0; k < colCount; k++) if (String(arr[k]).trim()) lastTbl[k] = String(lastTbl[k]).trim() ? (lastTbl[k] + " " + arr[k]) : arr[k];
+        return;
+      }
+      out.push(arr); lastTbl = arr;
+    });
+    return out;
+  }
+  function autoWidth(ws, grid, XLSX) {
+    if (!grid.length) return;
+    var widths = [];
+    grid.forEach(function (r) {
+      r.forEach(function (c, i) {
+        var len = String(c == null ? "" : c).length;
+        widths[i] = Math.max(widths[i] || 8, Math.min(len + 2, 60));
+      });
+    });
+    ws["!cols"] = widths.map(function (w) { return { wch: w }; });
+  }
+
+  /* regex field extraction */
+  function extractFields(text) {
+    text = " " + text.replace(/\s+/g, " ") + " ";
+    function uniq(re) {
+      var m, out = [], seen = {};
+      while ((m = re.exec(text)) !== null) { var v = m[0].trim(); if (!seen[v]) { seen[v] = 1; out.push(v); } }
+      return out;
+    }
+    var pan = uniq(/\b[A-Z]{5}[0-9]{4}[A-Z]\b/g);
+    var gst = uniq(/\b[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][0-9A-Z][Z][0-9A-Z]\b/g);
+    var tan = uniq(/\b[A-Z]{4}[0-9]{5}[A-Z]\b/g).filter(function (v) { return pan.indexOf(v) === -1; });
+    var cin = uniq(/[LUu][0-9]{5}[A-Za-z]{2}[0-9]{4}[A-Za-z]{3}[0-9]{6}/g);
+    var din = uniq(/\bDIN[:\s]*([0-9]{8})\b/gi);
+    var dates = uniq(/\b([0-3]?\d[\/\-.][01]?\d[\/\-.](?:\d{2}|\d{4}))\b/g);
+    var amounts = uniq(/(?:₹|Rs\.?|INR)\s?[0-9][0-9,]*(?:\.\d{1,2})?/g);
+    var inv = uniq(/\b(?:Invoice|Bill|Inv)\s*(?:No\.?|Number|#)?\s*[:#]?\s*([A-Z0-9\/\-]{3,})/gi);
+    var email = uniq(/[A-Za-z0-9._%+\-]+@[A-Za-z0-9.\-]+\.[A-Za-z]{2,}/g);
+    var phone = uniq(/\b(?:\+91[\-\s]?)?[6-9]\d{9}\b/g);
+    return [
+      ["PAN", pan], ["GSTIN", gst], ["TAN", tan], ["CIN", cin], ["DIN", din],
+      ["Invoice No.", inv], ["Amounts", amounts.slice(0, 25)], ["Dates", dates.slice(0, 25)],
+      ["Emails", email], ["Phone", phone]
+    ];
+  }
+
+})();
+  </script>
+</body>
+</html>
