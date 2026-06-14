@@ -356,6 +356,13 @@ a:hover { text-decoration: underline; }
 .wb-valitem { font-size: 13px; padding: 5px 10px; border-radius: 8px; border: 1px solid var(--glass-brd); }
 .wb-valitem.ok { background: rgba(15,185,138,.12); }
 .wb-valitem.bad { background: rgba(224,69,90,.14); }
+
+/* ---------- v10.1: interactive overlay widget ---------- */
+.ov-widget { position: absolute; box-sizing: border-box; border: 1.5px dashed var(--brand); cursor: move; touch-action: none; }
+.ov-widget img { width: 100%; height: 100%; display: block; pointer-events: none; -webkit-user-drag: none; }
+.ov-handle { position: absolute; width: 20px; height: 20px; background: var(--brand); color: #fff; border: 2px solid #fff; border-radius: 50%; display: grid; place-items: center; font-size: 11px; box-shadow: var(--shadow-sm); }
+.ov-res { right: -11px; bottom: -11px; cursor: nwse-resize; }
+.ov-rot { left: 50%; top: -30px; transform: translateX(-50%); cursor: grab; }
   </style>
 </head>
 <body>
@@ -813,6 +820,10 @@ a:hover { text-decoration: underline; }
   }
 
   var CHANGELOG = [
+    { v: "v10.1", title: "Fixes — Redaction detect & Interactive Overlay", items: [
+      "Redact: auto-detect now catches sensitive values split across text fragments (e.g. PAN, account numbers, emails) in iText / government PDFs — previously some were missed.",
+      "Overlay / Letterhead: redesigned with on-screen handles — drag to move, corner ◢ to resize, top ⟳ to rotate — with a live preview, instead of typing numbers."
+    ] },
     { v: "v10", title: "Redaction, Overlay, Compare & OCR Workbench", items: [
       "Redact PDF: auto-detects sensitive data (PAN, GSTIN, TAN, CIN, DIN, IFSC, Aadhaar, card/account numbers, emails, phones) and lets you draw redaction boxes. Redacted pages are permanently flattened so hidden text cannot be recovered; works on scans via OCR; output is verified.",
       "Overlay / Letterhead: stamp a letterhead, logo, sign or stamp (PDF/PNG/JPG) over chosen pages with position, size, rotation, opacity and live preview.",
@@ -916,8 +927,8 @@ a:hover { text-decoration: underline; }
   window.ProPDF = App;
 
   /* ---------------- version + update check ---------------- */
-  App.VERSION = "v10";
-  function versionNum(v) { var m = String(v).match(/\d+/); return m ? parseInt(m[0], 10) : 0; }
+  App.VERSION = "v10.1";
+  function cmpVer(a, b) { var pa = String(a).match(/\d+/g) || [], pb = String(b).match(/\d+/g) || []; var n = Math.max(pa.length, pb.length); for (var i = 0; i < n; i++) { var x = parseInt(pa[i] || 0, 10), y = parseInt(pb[i] || 0, 10); if (x !== y) return x > y; } return false; }
   function injectVersionBadge() {
     var bn = document.querySelector(".brand-name");
     if (bn && !bn.querySelector(".ver-badge")) bn.appendChild(el("span", { class: "ver-badge" }, App.VERSION));
@@ -937,7 +948,7 @@ a:hover { text-decoration: underline; }
     if (typeof location === "undefined" || !/^https?:/.test(location.protocol)) return;  // only when hosted online
     fetch("version.json?_=" + Date.now(), { cache: "no-store" })
       .then(function (r) { return r.ok ? r.json() : null; })
-      .then(function (j) { if (j && j.version && versionNum(j.version) > versionNum(App.VERSION)) showUpdateBar(j.version, j.notes || ""); })
+      .then(function (j) { if (j && j.version && cmpVer(j.version, App.VERSION)) showUpdateBar(j.version, j.notes || ""); })
       .catch(function () {});
   };
 
@@ -2571,17 +2582,34 @@ a:hover { text-decoration: underline; }
       }
       function detectOnItems(items, vp, pi, found) {
         var pw = vp.width, ph = vp.height;
+        // join all item text (with a space separator) and remember each item's char span,
+        // so values split across fragments (common in iText PDFs) are still caught.
+        var joined = "", spans = [];
         items.forEach(function (it) {
-          if (!it.str || !it.str.trim()) return;
-          SENS_PATTERNS.forEach(function (pat) {
-            var re = new RegExp(pat.re.source, pat.re.flags), m;
-            while ((m = re.exec(it.str)) !== null) {
-              var h = it.height || 10, x = it.transform[4], y = it.transform[5];
-              var b = { x: Math.max(0, (x / pw) - 0.002), y: Math.max(0, ((ph - y - h) / ph) - 0.004), w: Math.min(1, (it.width || h * m[0].length * 0.5) / pw + 0.004), h: Math.min(1, (h / ph) + 0.008) };
-              (st.boxes[pi] = st.boxes[pi] || []).push(b); drawBox(pi, b);
-              found.push({ type: pat.type, value: m[0], conf: pat.conf, page: pi });
-            }
-          });
+          if (it.str == null) return;
+          var start = joined.length;
+          joined += it.str;
+          spans.push({ start: start, end: joined.length, it: it });
+          joined += " ";
+        });
+        SENS_PATTERNS.forEach(function (pat) {
+          var re = new RegExp(pat.re.source, pat.re.flags), m;
+          while ((m = re.exec(joined)) !== null) {
+            if (m[0] === "") { re.lastIndex++; continue; }
+            var ms = m.index, me = m.index + m[0].length;
+            var cov = spans.filter(function (sp) { return sp.start < me && sp.end > ms; });
+            if (!cov.length) continue;
+            var minx = Infinity, maxx = -Infinity, miny = Infinity, maxy = -Infinity;
+            cov.forEach(function (sp) {
+              var it = sp.it, h = it.height || 10, x = it.transform[4], y = it.transform[5];
+              var w = it.width || h * 0.5 * (it.str ? it.str.length : 1);
+              minx = Math.min(minx, x); maxx = Math.max(maxx, x + w);
+              miny = Math.min(miny, ph - y - h); maxy = Math.max(maxy, ph - y);
+            });
+            var b = { x: Math.max(0, minx / pw - 0.003), y: Math.max(0, miny / ph - 0.005), w: Math.min(1, (maxx - minx) / pw + 0.006), h: Math.min(1, (maxy - miny) / ph + 0.01) };
+            (st.boxes[pi] = st.boxes[pi] || []).push(b); drawBox(pi, b);
+            found.push({ type: pat.type, value: m[0], conf: pat.conf, page: pi });
+          }
         });
       }
       function detectOnWords(words, W, H, pi, found) {
@@ -2689,100 +2717,125 @@ a:hover { text-decoration: underline; }
   function loadPdfjs2(ab) { return L.ensure("pdfjs").then(function () { return window.pdfjsLib.getDocument({ data: ab }).promise; }); }
 
   /* ====================================================================
-     OVERLAY / LETTERHEAD STAMPING
+     OVERLAY / LETTERHEAD STAMPING (interactive drag / resize / rotate)
      ==================================================================== */
   P.registerTool({
-    id: "overlay", name: "Overlay / Letterhead", emoji: "🩺", group: "Optimize & Secure",
+    id: "overlay", name: "Overlay / Letterhead", emoji: "🖋️", group: "Optimize & Secure",
     desc: "Stamp a letterhead / logo / sign over pages.",
-    long: "Place a letterhead, stamp, signature or logo (PDF / PNG / JPG) over your document — with position, size, rotation, opacity and page-range control, plus a live preview.",
+    long: "Place a letterhead, stamp, signature or logo (PDF/PNG/JPG) over your document. Drag it to move, use the corner handle to resize and the top handle to rotate — with a live preview — then apply to the pages you choose.",
     render: function (panel) {
-      var base = { bytes: null }, ov = { bytes: null, isPdf: false };
-      var zb = P.fileZone({ accept: "application/pdf,.pdf", hint: "base PDF", preview: false, onChange: function (f) { if (f[0]) base.bytes = null, P.readAB(f[0]).then(function (ab) { base.bytes = ab; preview(); }); } });
-      var zo = P.fileZone({ accept: "application/pdf,.pdf,image/png,image/jpeg", hint: "overlay: PDF / PNG / JPG", preview: false, onChange: function (f) { if (f[0]) { ov.isPdf = /pdf$/i.test(f[0].type) || /\.pdf$/i.test(f[0].name); P.readAB(f[0]).then(function (ab) { ov.bytes = ab; preview(); }); } } });
+      var base = { bytes: null }, ov = { bytes: null, isPdf: false, url: null, aspect: 1 };
+      var W = { xc: 50, yc: 50, w: 40, rot: 0 };
+      var zb = P.fileZone({ accept: "application/pdf,.pdf", hint: "base PDF", preview: false, onChange: function (f) { if (f[0]) P.readAB(f[0]).then(function (ab) { base.bytes = ab; preview(); }); } });
+      var zo = P.fileZone({ accept: "application/pdf,.pdf,image/png,image/jpeg", hint: "overlay: PDF / PNG / JPG", preview: false, onChange: loadOverlay });
       panel.appendChild(el("div", { class: "field" }, "<label>1) Base document</label>")); panel.appendChild(zb.el);
-      panel.appendChild(el("div", { class: "field", style: "margin-top:10px" }, "<label>2) Overlay (stamp / letterhead)</label>")); panel.appendChild(zo.el);
+      panel.appendChild(el("div", { class: "field", style: "margin-top:10px" }, "<label>2) Overlay (letterhead / stamp / signature / logo)</label>")); panel.appendChild(zo.el);
       panel.appendChild(row(
-        field("Horizontal %", '<input id="ovX" type="number" value="50" min="0" max="100">') +
-        field("Vertical %", '<input id="ovY" type="number" value="50" min="0" max="100">') +
-        field("Size %", '<input id="ovS" type="number" value="40" min="2" max="200">') +
-        field("Rotation", '<input id="ovR" type="number" value="0" min="-180" max="180">') +
         field("Opacity", '<input id="ovO" type="number" value="1" min="0.05" max="1" step="0.05">') +
         field("Pages", '<select id="ovPages"><option value="all">All</option><option value="odd">Odd</option><option value="even">Even</option><option value="range">Range…</option></select>') +
         field("Range (e.g. 1-3,5)", '<input id="ovRange" type="text" placeholder="1-3,5">')
       ));
       var io = actionUI(panel);
+      var hint = el("p", { class: "muted", style: "margin:8px 2px;font-size:12.5px" }, "Drag the overlay to move • corner ◢ to resize • top ⟳ to rotate.");
       var prevWrap = el("div", { class: "ov-preview" });
-      var bPrev = btn("Update preview", preview, "secondary");
       var go = btn("Apply overlay ▸", run);
-      var brow = el("div", { class: "btn-row" }); brow.appendChild(bPrev); brow.appendChild(go);
-      panel.appendChild(brow); panel.appendChild(prevWrap);
+      panel.appendChild(el("div", { class: "btn-row" })).appendChild(go);
+      panel.appendChild(hint); panel.appendChild(prevWrap);
 
-      function opts() {
-        return { x: +document.getElementById("ovX").value / 100, y: +document.getElementById("ovY").value / 100,
-          s: +document.getElementById("ovS").value / 100, r: +document.getElementById("ovR").value,
-          o: +document.getElementById("ovO").value, pages: document.getElementById("ovPages").value,
-          range: document.getElementById("ovRange").value };
-      }
-      function preview() {
-        if (!base.bytes) return;
-        io.res.clear();
-        loadPdfjs2(base.bytes.slice(0)).then(function (pdf) {
-          return pdf.getPage(1).then(function (pg) {
-            var vp = pg.getViewport({ scale: 1 });
-            var sc = Math.min(1.2, 560 / vp.width);
-            var vp2 = pg.getViewport({ scale: sc });
-            var c = el("canvas"); c.width = vp2.width; c.height = vp2.height; c.style.width = "100%"; c.style.maxWidth = vp2.width + "px";
-            return pg.render({ canvasContext: c.getContext("2d"), viewport: vp2 }).promise.then(function () {
-              prevWrap.innerHTML = ""; var holder = el("div", { class: "ov-stage" });
-              holder.appendChild(c);
-              if (ov.bytes && !ov.isPdf) {
-                var o = opts(); var im = el("img", { class: "ov-ghost" });
-                im.src = URL.createObjectURL(new Blob([ov.bytes.slice(0)]));
-                im.onload = function () {
-                  var pw = c.clientWidth || vp2.width;
-                  im.style.width = (o.s * 100) + "%"; im.style.opacity = o.o;
-                  im.style.left = (o.x * 100) + "%"; im.style.top = (o.y * 100) + "%";
-                  im.style.transform = "translate(-50%,-50%) rotate(" + o.r + "deg)";
-                };
-                holder.appendChild(im);
-              } else if (ov.bytes && ov.isPdf) {
-                holder.appendChild(el("div", { class: "muted", style: "padding:8px" }, "PDF overlay will be applied on “Apply” (preview shown for image overlays)."));
-              }
-              prevWrap.appendChild(el("div", { class: "preview-head" }, "Live preview (page 1)"));
-              prevWrap.appendChild(holder);
+      function loadOverlay(f) {
+        if (!f[0]) return;
+        ov.isPdf = /pdf$/i.test(f[0].type) || /\.pdf$/i.test(f[0].name);
+        P.readAB(f[0]).then(function (ab) {
+          ov.bytes = ab;
+          if (!ov.isPdf) {
+            ov.url = URL.createObjectURL(new Blob([ab.slice(0)]));
+            var im = new Image(); im.onload = function () { ov.aspect = im.naturalHeight / im.naturalWidth || 0.4; preview(); }; im.src = ov.url;
+          } else {
+            loadPdfjs2(ab.slice(0)).then(function (pdf) { return pdf.getPage(1); }).then(function (pg) {
+              var vp = pg.getViewport({ scale: 1 }); var c = el("canvas"); c.width = vp.width; c.height = vp.height;
+              return pg.render({ canvasContext: c.getContext("2d"), viewport: vp }).promise.then(function () { ov.url = c.toDataURL("image/png"); ov.aspect = vp.height / vp.width; preview(); });
             });
+          }
+        });
+      }
+
+      function preview() {
+        if (!base.bytes || !ov.url) return;
+        io.res.clear();
+        loadPdfjs2(base.bytes.slice(0)).then(function (pdf) { return pdf.getPage(1); }).then(function (pg) {
+          var vp = pg.getViewport({ scale: 1 }); var sc = Math.min(1.1, 620 / vp.width); var vp2 = pg.getViewport({ scale: sc });
+          var c = el("canvas"); c.width = vp2.width; c.height = vp2.height;
+          return pg.render({ canvasContext: c.getContext("2d"), viewport: vp2 }).promise.then(function () {
+            prevWrap.innerHTML = "";
+            prevWrap.appendChild(el("div", { class: "preview-head" }, "Live preview — page 1 (drag / resize / rotate the overlay)"));
+            var stage = el("div", { class: "ov-stage" }); stage.style.width = vp2.width + "px"; stage.style.maxWidth = "100%";
+            stage.appendChild(c);
+            var widget = el("div", { class: "ov-widget" });
+            var img = el("img"); img.src = ov.url; img.setAttribute("draggable", "false"); widget.appendChild(img);
+            var hRes = el("div", { class: "ov-handle ov-res", title: "Resize" }); hRes.innerHTML = "◢";
+            var hRot = el("div", { class: "ov-handle ov-rot", title: "Rotate" }); hRot.innerHTML = "⟳";
+            widget.appendChild(hRes); widget.appendChild(hRot);
+            stage.appendChild(widget); prevWrap.appendChild(stage);
+            layout(widget, stage); interactions(widget, stage, hRes, hRot);
           });
         }).catch(fail(io, go));
       }
-      function pageSet(o, total) {
-        if (o.pages === "all") { var a = []; for (var i = 0; i < total; i++) a.push(i); return a; }
-        if (o.pages === "odd") { var b = []; for (i = 0; i < total; i += 2) b.push(i); return b; }
-        if (o.pages === "even") { var c = []; for (i = 1; i < total; i += 2) c.push(i); return c; }
-        return P.parseRanges(o.range, total);
+      function layout(widget, stage) {
+        var sw = stage.clientWidth || stage.offsetWidth || 600, sh = stage.clientHeight || stage.offsetHeight || 800;
+        var w = W.w / 100 * sw, h = w * ov.aspect;
+        widget.style.width = w + "px"; widget.style.height = h + "px";
+        widget.style.left = (W.xc / 100 * sw) + "px"; widget.style.top = (W.yc / 100 * sh) + "px";
+        widget.style.transform = "translate(-50%,-50%) rotate(" + W.rot + "deg)";
+        var o = document.getElementById("ovO"); widget.style.opacity = o ? o.value : 1;
+      }
+      function interactions(widget, stage, hRes, hRot) {
+        var mode = null, sx = 0, sy = 0, startW = 0, startX = 0, startY = 0, cx = 0, cy = 0;
+        function bx() { return stage.getBoundingClientRect(); }
+        widget.addEventListener("mousedown", function (e) { if (e.target === hRes || e.target === hRot) return; mode = "move"; sx = e.clientX; sy = e.clientY; startX = W.xc; startY = W.yc; e.preventDefault(); });
+        hRes.addEventListener("mousedown", function (e) { mode = "resize"; sx = e.clientX; startW = W.w; e.stopPropagation(); e.preventDefault(); });
+        hRot.addEventListener("mousedown", function (e) { var b = bx(); cx = b.left + W.xc / 100 * b.width; cy = b.top + W.yc / 100 * b.height; mode = "rotate"; e.stopPropagation(); e.preventDefault(); });
+        window.addEventListener("mousemove", function (e) {
+          if (!mode || !widget.isConnected) return; var b = bx();
+          if (mode === "move") { W.xc = Math.max(0, Math.min(100, startX + (e.clientX - sx) / b.width * 100)); W.yc = Math.max(0, Math.min(100, startY + (e.clientY - sy) / b.height * 100)); }
+          else if (mode === "resize") { W.w = Math.max(3, Math.min(200, startW + (e.clientX - sx) / b.width * 100)); }
+          else if (mode === "rotate") { W.rot = Math.round(Math.atan2(e.clientY - cy, e.clientX - cx) * 180 / Math.PI + 90); }
+          layout(widget, stage);
+        });
+        window.addEventListener("mouseup", function () { mode = null; });
+        var oo = document.getElementById("ovO"); if (oo) oo.addEventListener("input", function () { layout(widget, stage); });
+      }
+      function pageSet(total) {
+        var v = document.getElementById("ovPages").value;
+        if (v === "all") { var a = []; for (var i = 0; i < total; i++) a.push(i); return a; }
+        if (v === "odd") { var b = []; for (i = 0; i < total; i += 2) b.push(i); return b; }
+        if (v === "even") { var c = []; for (i = 1; i < total; i += 2) c.push(i); return c; }
+        return P.parseRanges(document.getElementById("ovRange").value, total);
       }
       function run() {
         if (!base.bytes) return P.toast("Add the base PDF", true);
         if (!ov.bytes) return P.toast("Add an overlay file", true);
-        var o = opts();
+        var op = +document.getElementById("ovO").value;
         io.res.clear(); io.prog.show("Applying overlay…"); go.disabled = true;
         L.ensure("pdfLib").then(function () {
           var PDFLib = window.PDFLib;
           return PDFLib.PDFDocument.load(base.bytes.slice(0), { ignoreEncryption: true }).then(function (doc) {
-            var idx = pageSet(o, doc.getPageCount());
+            var idx = pageSet(doc.getPageCount());
             var embedP = ov.isPdf
               ? PDFLib.PDFDocument.load(ov.bytes.slice(0), { ignoreEncryption: true }).then(function (od) { return doc.embedPage(od.getPage(0)); })
-              : (/* image */ (function () { var bytes = new Uint8Array(ov.bytes.slice(0)); var isPng = bytes[0] === 0x89; return isPng ? doc.embedPng(ov.bytes.slice(0)) : doc.embedJpg(ov.bytes.slice(0)); })());
+              : (function () { var by = new Uint8Array(ov.bytes.slice(0)); return by[0] === 0x89 ? doc.embedPng(ov.bytes.slice(0)) : doc.embedJpg(ov.bytes.slice(0)); })();
             return Promise.resolve(embedP).then(function (emb) {
-              var dims = emb.scale ? emb.scale(1) : { width: emb.width, height: emb.height };
+              var th = W.rot * Math.PI / 180, cos = Math.cos(th), sin = Math.sin(th);
               idx.forEach(function (pi) {
-                var page = doc.getPage(pi); var pw = page.getWidth(), ph = page.getHeight();
-                var w = pw * o.s, h = w * (dims.height / dims.width);
-                var cx = pw * o.x, cy = ph * (1 - o.y);
-                var drawOpts = { x: cx - w / 2, y: cy - h / 2, width: w, height: h, opacity: o.o, rotate: PDFLib.degrees(o.r) };
-                if (ov.isPdf) page.drawPage(emb, drawOpts); else page.drawImage(emb, drawOpts);
+                var page = doc.getPage(pi), pw = page.getWidth(), ph = page.getHeight();
+                var w = W.w / 100 * pw, h = w * ov.aspect;
+                var cxp = W.xc / 100 * pw, cyp = ph * (1 - W.yc / 100);
+                var x = cxp - (cos * (w / 2) - sin * (h / 2));
+                var y = cyp - (sin * (w / 2) + cos * (h / 2));
+                var o = { x: x, y: y, width: w, height: h, opacity: op, rotate: PDFLib.degrees(W.rot) };
+                if (ov.isPdf) page.drawPage(emb, o); else page.drawImage(emb, o);
               });
               io.prog.set(100, "Saving…");
-              return doc.save().then(function (b) { P.download("ProPDF_overlay.pdf", b, "application/pdf"); io.prog.hide(); io.res.ok("Overlay applied to " + idx.length + " page(s)."); go.disabled = false; });
+              return doc.save().then(function (bb) { P.download("ProPDF_overlay.pdf", bb, "application/pdf"); io.prog.hide(); io.res.ok("Overlay applied to " + idx.length + " page(s)."); go.disabled = false; });
             });
           });
         }).catch(fail(io, go));

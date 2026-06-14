@@ -1,4 +1,4 @@
 {
-  "version": "v10",
-  "notes": "Redaction, Letterhead Overlay, PDF Compare & OCR Workbench"
+  "version": "v10.1",
+  "notes": "Fixes: redaction auto-detect + interactive overlay (drag/resize/rotate)"
 }

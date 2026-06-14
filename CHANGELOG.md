@@ -3,6 +3,13 @@
 All notable changes to ProPDF, newest first. ProPDF is a 100% local, DPDP-aligned
 PDF suite by **Kothari Jain & Associates**.
 
+## v10.1 — Fixes: Redaction detect & Interactive Overlay
+- **Redact** — auto-detect now catches sensitive values split across text fragments
+  (e.g. PAN, account numbers, emails) in iText / government PDFs; previously some
+  were missed.
+- **Overlay / Letterhead** — redesigned with on-screen handles: drag to move,
+  corner to resize, top handle to rotate, with a live preview.
+
 ## v10 — Redaction, Overlay, Compare & OCR Workbench
 - **Redact PDF** — auto-detects sensitive data (PAN, GSTIN, TAN, CIN, DIN, IFSC,
   Aadhaar, card / account numbers, emails, phones) and lets you draw redaction
