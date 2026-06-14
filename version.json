@@ -1,4 +1,5 @@
 {
   "version": "v10.3",
-  "notes": "Fix: redaction preview now shows full pages in one scrollable view"
+  "notes": "Fix: redaction preview now shows full pages in one scrollable view",
+  "analytics": "https://propdf.goatcounter.com/count"
 }
