@@ -821,6 +821,14 @@ a:hover { text-decoration: underline; }
   }
 
   var CHANGELOG = [
+    { v: "v10.5", title: "PDF \u2192 Excel \u2014 true grid extraction + sheet layout", items: [
+      "PDF \u2192 Excel now reads the table as a true grid: it detects both the horizontal and vertical ruled lines and drops every word into its exact cell. Multi-line entries (like wrapped bank-statement transactions) now stay in one row on every page \u2014 fixing the earlier bug where the first rows of later pages were dumped into a single column, and a stray extra column that shifted some pages.",
+      "New Layout choice: export all pages into one combined sheet (default) or one sheet per page.",
+      "Repeated column headers on later pages are removed automatically in combined mode."
+    ] },
+    { v: "v10.4", title: "Much better PDF \u2192 Excel", items: [
+      "PDF \u2192 Excel now detects the table's ruled lines for exact column splits, groups multi-line rows (e.g. bank-statement transactions) into a single row, and keeps amounts as numbers. Borderless tables use smart whitespace detection. A big jump in accuracy on real statements."
+    ] },
     { v: "v10.3", title: "Fix — Redaction preview shows full pages", items: [
       "Redact: the preview is now a single scrollable area showing every page at full height — scroll down through all pages and draw redaction boxes anywhere. (Multi-page PDFs previously shrank each page to a thin strip.)"
     ] },
@@ -935,7 +943,7 @@ a:hover { text-decoration: underline; }
   window.ProPDF = App;
 
   /* ---------------- version + update check ---------------- */
-  App.VERSION = "v10.3";
+  App.VERSION = "v10.5";
   var GC_ENDPOINT = "";
   function initAnalytics(url) {
     if (GC_ENDPOINT || !url || typeof location === "undefined" || !/^https?:/.test(location.protocol)) return;
@@ -1322,12 +1330,13 @@ a:hover { text-decoration: underline; }
   P.registerTool({
     id: "pdf2excel", name: "PDF → Excel", emoji: "📊", group: "Convert from PDF", badge: "Flagship",
     desc: "Smart table extraction to .xlsx / .csv.",
-    long: "Reconstructs tables from text positions — detects rows and columns and preserves alignment. If a page is scanned (no text), it automatically runs OCR and rebuilds the table, then exports a clean Excel workbook (one sheet per page) or CSV. No separate OCR step needed.",
+    long: "Reconstructs tables the way the best converters do: it detects the table's ruled lines (rows and columns) and drops every word into its exact cell, so multi-line entries (like bank-statement transactions) stay in one row. Borderless tables fall back to smart whitespace detection. Choose one combined sheet or one sheet per page. If a page is scanned (no text), it automatically runs OCR first — no separate step needed.",
     render: function (panel) {
       var zone = P.fileZone({ accept: "application/pdf,.pdf", hint: "one PDF file (text or scanned)" });
       panel.appendChild(zone.el);
       panel.appendChild(row(
         field("Output", '<select id="xlfmt"><option value="xlsx">Excel (.xlsx)</option><option value="csv">CSV (.csv)</option></select>') +
+        field("Layout", '<select id="xlSheets"><option value="one">One sheet (all pages combined)</option><option value="multi">Multiple sheets (one per page)</option></select>') +
         field("If scanned, OCR language", '<select id="xlLang">' + OCR_OPTS + '</select>') +
         field("Mode", '<select id="xlMode"><option value="auto">Auto-detect (OCR only if needed)</option><option value="ocr">Force OCR (treat as scanned)</option></select>')
       ));
@@ -1339,15 +1348,29 @@ a:hover { text-decoration: underline; }
         if (!zone.files.length) return P.toast("Add a PDF", true);
         io.res.clear(); io.prog.show("Loading engine…"); go.disabled = true;
         var asCsv = document.getElementById("xlfmt").value === "csv";
+        var oneSheet = document.getElementById("xlSheets").value === "one";
         var langs = document.getElementById("xlLang").value || "eng";
         var force = document.getElementById("xlMode").value === "ocr";
         var usedOcr = false, totalCells = 0;
         Promise.all([loadPdfjs(zone.files[0]), L.ensure("xlsx")]).then(function (r) {
           var pdf = r[0], XLSX = window.XLSX, wb = XLSX.utils.book_new();
-          var n = pdf.numPages, i = 1, csvAll = [];
+          var n = pdf.numPages, i = 1, csvAll = [], combined = [], headerSigs = {}, firstPageDone = false;
           function emit(grid) {
             grid.forEach(function (rw) { rw.forEach(function (c) { if (String(c).trim()) totalCells++; }); });
-            if (asCsv) {
+            if (oneSheet) {
+              // Combine every page into one continuous sheet; drop a page's leading
+              // row if it just repeats the header captured from the first page.
+              if (!firstPageDone) {
+                grid.forEach(function (rw) {
+                  var filled = rw.filter(function (c) { return String(c).trim(); }).length;
+                  if (rw.length >= 2 && filled >= rw.length - 1) headerSigs[JSON.stringify(rw)] = 1;
+                });
+              }
+              var g = grid.slice();
+              if (firstPageDone) { while (g.length && headerSigs[JSON.stringify(g[0])]) g = g.slice(1); }
+              g.forEach(function (rw) { combined.push(rw); });
+              firstPageDone = true;
+            } else if (asCsv) {
               csvAll.push("# Page " + i);
               grid.forEach(function (rw) { csvAll.push(rw.map(csvCell).join(",")); });
               csvAll.push("");
@@ -1360,6 +1383,14 @@ a:hover { text-decoration: underline; }
           function finish() {
             io.prog.set(100, "Saving…");
             var base = zone.files[0].name.replace(/\.[^.]+$/, "");
+            if (oneSheet) {
+              if (asCsv) { csvAll = combined.map(function (rw) { return rw.map(csvCell).join(","); }); }
+              else {
+                var ws1 = XLSX.utils.aoa_to_sheet(combined.length ? combined : [[""]]);
+                autoWidth(ws1, combined, XLSX);
+                XLSX.utils.book_append_sheet(wb, ws1, "Sheet1");
+              }
+            }
             if (asCsv) P.download(base + ".csv", csvAll.join("\n"), "text/csv");
             else {
               var bytes = XLSX.write(wb, { bookType: "xlsx", type: "array" });
@@ -1374,11 +1405,11 @@ a:hover { text-decoration: underline; }
             if (i > n) return finish();
             io.prog.set(((i - 1) / n) * 100, "Analyzing page " + i + " of " + n + "…");
             return getPageContent(pdf, i, {
-              force: force, langs: langs,
+              force: force, langs: langs, detectLines: true,
               onProgress: function (pr) { io.prog.set(((i - 1 + pr) / n) * 100, "OCR page " + i + " of " + n + " — " + Math.round(pr * 100) + "%"); }
             }).then(function (pc) {
               if (pc.ocr) usedOcr = true;
-              var grid = (pc.words && pc.words.length) ? buildTable(pc.words) : [];
+              var grid = (pc.words && pc.words.length) ? buildTable(pc.words, pc.vlines, pc.hlines) : [];
               if (!grid.length) grid = pc.text ? pc.text.split(/\r?\n/).map(function (l) { return [l]; }) : [[""]];
               emit(grid);
               i++; return page();
@@ -2297,11 +2328,23 @@ a:hover { text-decoration: underline; }
       return pg.getTextContent().then(function (tc) {
         var textLen = tc.items.reduce(function (a, it) { return a + (it.str ? it.str.trim().length : 0); }, 0);
         var needOcr = opts.force || textLen < 20;
-        if (!needOcr) return { text: itemsToText(tc.items), words: itemsToWords(tc.items, vp.height), ocr: false };
+        if (!needOcr) {
+          if (opts.detectLines) {
+            return rasterizePage(pg, 2).then(function (canvas) {
+              var g = detectGrid(canvas, vp.width, vp.height);
+              return { text: itemsToText(tc.items), words: itemsToWords(tc.items, vp.height), ocr: false, vlines: g.vlines, hlines: g.hlines };
+            });
+          }
+          return { text: itemsToText(tc.items), words: itemsToWords(tc.items, vp.height), ocr: false, vlines: null, hlines: null };
+        }
         return L.ensure("tesseract").then(function () {
           return rasterizePage(pg, opts.scale || 2.5).then(function (canvas) {
             return recognizeCanvas(canvas, opts.langs || "eng", opts.onProgress).then(function (data) {
-              return { text: (data.text || "").trim(), words: ocrWordsFromData(data), ocr: true };
+              var words = ocrWordsFromData(data);
+              var sf = vp.width / canvas.width;
+              words.forEach(function (w) { w.x *= sf; w.y *= sf; w.w *= sf; w.h *= sf; });
+              var g = opts.detectLines ? detectGrid(canvas, vp.width, vp.height) : { vlines: null, hlines: null };
+              return { text: (data.text || "").trim(), words: words, ocr: true, vlines: g.vlines, hlines: g.hlines };
             });
           });
         });
@@ -2313,81 +2356,133 @@ a:hover { text-decoration: underline; }
      rows by vertical clustering; columns anchored to the modal-width (header) row;
      each word assigned to a column by position; table region isolated from prose
      (expanded downward for wrapped rows); continuation lines merged upward. ---- */
-  function isNumVal(v) { return typeof v === "number"; }
-  function buildTable(words) {
+  function buildTable(words, vlines, hlines) {
     if (!words || !words.length) return [];
+    // Preferred path: true lattice grid from BOTH ruled-line directions.
+    // Rows come from horizontal lines (so multi-line records stay in ONE row),
+    // columns from vertical lines — exactly how iLovePDF/Camelot read ruled tables.
+    if (vlines && vlines.length >= 3 && hlines && hlines.length >= 3) {
+      var lat = buildLattice(words, vlines, hlines);
+      if (lat.length) return lat;
+    }
+    words.forEach(function (w) { w.x1 = w.x + w.w; w.cy = w.y + w.h / 2; });
     var medH = medianOf(words.map(function (w) { return w.h; })) || 10;
-    var rowTol = medH * 0.7;
-    words.forEach(function (w) { w.cy = w.y + w.h / 2; w.x1 = w.x + w.w; });
     var ws = words.slice().sort(function (a, b) { return a.cy - b.cy; });
-    var rows = [], cur = [ws[0]];
+    var lines = [], cur = [ws[0]];
     for (var i = 1; i < ws.length; i++) {
       var ref = cur.reduce(function (s, w) { return s + w.cy; }, 0) / cur.length;
-      if (Math.abs(ws[i].cy - ref) <= rowTol) cur.push(ws[i]);
-      else { rows.push(cur); cur = [ws[i]]; }
+      if (Math.abs(ws[i].cy - ref) <= medH * 0.6) cur.push(ws[i]);
+      else { lines.push(cur); cur = [ws[i]]; }
     }
-    rows.push(cur);
-    rows.forEach(function (r) { r.sort(function (a, b) { return a.x - b.x; }); });
-
-    var gaps = [];
-    rows.forEach(function (r) { for (var k = 1; k < r.length; k++) gaps.push(r[k].x - r[k - 1].x1); });
-    var medGap = medianOf(gaps.filter(function (g) { return g > 0; })) || medH;
-    var gapThresh = Math.max(medH * 1.0, medGap * 1.8);
-
-    function cellsOf(r) {
-      var cells = [], c = [r[0]];
-      for (var k = 1; k < r.length; k++) { if (r[k].x - r[k - 1].x1 > gapThresh) { cells.push(c); c = [r[k]]; } else c.push(r[k]); }
-      cells.push(c);
-      return cells.map(function (cc) { return { x0: cc[0].x, x1: cc[cc.length - 1].x1 }; });
+    lines.push(cur);
+    lines.forEach(function (l) { l.sort(function (a, b) { return a.x - b.x; }); });
+    lines.sort(function (a, b) { return a[0].cy - b[0].cy; });
+    var minX = Math.min.apply(null, words.map(function (w) { return w.x; }));
+    var maxX = Math.max.apply(null, words.map(function (w) { return w.x1; }));
+    var bounds;
+    if (vlines && vlines.length >= 3) {
+      bounds = vlines.slice().sort(function (a, b) { return a - b; });   // ruled table: use detected lines
+    } else {
+      // stream: column gaps via whole-page whitespace projection (row coverage)
+      var bin = Math.max(2, Math.round(medH * 0.3)), nb = Math.ceil((maxX - minX) / bin) + 1, cov = new Array(nb).fill(0);
+      lines.forEach(function (l) {
+        var m = new Array(nb).fill(false);
+        l.forEach(function (w) { var a = Math.floor((w.x - minX) / bin), b = Math.ceil((w.x1 - minX) / bin); for (var k = a; k < b && k < nb; k++) m[k] = true; });
+        for (var k = 0; k < nb; k++) if (m[k]) cov[k]++;
+      });
+      var nL = lines.length, gapMax = Math.max(0, Math.floor(nL * 0.12)), minSep = Math.max(bin * 2, medH * 0.7), seps = [], p = 0;
+      while (p < nb) { if (cov[p] <= gapMax) { var j = p; while (j < nb && cov[j] <= gapMax) j++; if ((j - p) * bin >= minSep) seps.push([minX + p * bin, minX + j * bin]); p = j; } else p++; }
+      bounds = [minX - 1]; seps.forEach(function (s) { bounds.push((s[0] + s[1]) / 2); }); bounds.push(maxX + 1);
     }
-    var rowCells = rows.map(cellsOf);
-
-    var counts = {};
-    rowCells.forEach(function (c) { if (c.length >= 4) counts[c.length] = (counts[c.length] || 0) + 1; });
-    var modal = 0, best = -1;
-    Object.keys(counts).forEach(function (k) { var n = +k; if (counts[n] > best || (counts[n] === best && n > modal)) { best = counts[n]; modal = n; } });
-    if (!modal) return rows.map(function (r) { return [coerce(r.map(function (w) { return w.str; }).join(" "))]; });
-
-    var strong = [];
-    rowCells.forEach(function (c, i) { if (c.length >= modal - 1) strong.push(i); });
-    var tmplIdx = null;
-    for (var si = 0; si < strong.length; si++) { if (rowCells[strong[si]].length === modal) { tmplIdx = strong[si]; break; } }
-    if (tmplIdx == null) tmplIdx = strong[0];
-    var tmpl = rowCells[tmplIdx];
-    var bounds = [-1e9];
-    for (var bi = 1; bi < tmpl.length; bi++) bounds.push((tmpl[bi - 1].x1 + tmpl[bi].x0) / 2);
-    bounds.push(1e9);
-    var colCount = tmpl.length;
-    function colOf(cx) { for (var k = 0; k < colCount; k++) if (cx >= bounds[k] && cx < bounds[k + 1]) return k; return colCount - 1; }
-
-    var rowArrs = rows.map(function (r) {
-      var arr = new Array(colCount).fill("");
-      r.forEach(function (w) { var k = colOf(w.x + w.w / 2); arr[k] = (arr[k] ? arr[k] + " " : "") + w.str; });
-      return arr.map(coerce);
-    });
-
-    // numeric columns (from strong rows) help detect trailing table rows
-    var numCnt = new Array(colCount).fill(0);
-    strong.forEach(function (i) { rowArrs[i].forEach(function (v, k) { if (isNumVal(v)) numCnt[k]++; }); });
-    var numericCols = numCnt.map(function (c) { return c >= 2; });
-    function filledCount(a) { return a.filter(function (v) { return String(v).trim(); }).length; }
-    function numericHit(a) { return a.some(function (v, k) { return numericCols[k] && isNumVal(v); }); }
-
-    var tStart = Math.min.apply(null, strong), tEnd = Math.max.apply(null, strong);
-    for (var ei = tEnd + 1; ei < rows.length; ei++) {
-      if (filledCount(rowArrs[ei]) >= 2 && numericHit(rowArrs[ei])) tEnd = ei; else break;
+    var colCount = bounds.length - 1;
+    function colOf(cx) { for (var k = 0; k < colCount; k++) if (cx >= bounds[k] && cx < bounds[k + 1]) return k; return cx < bounds[0] ? 0 : colCount - 1; }
+    if (colCount < 2) return lines.map(function (l) { return [coerce(l.map(function (w) { return w.str; }).join(" "))]; });
+    function lineArr(l) { var arr = new Array(colCount).fill(""); l.forEach(function (w) { var k = colOf((w.x + w.x1) / 2); arr[k] = (arr[k] ? arr[k] + " " : "") + w.str; }); return arr; }
+    var lineArrs = lines.map(lineArr);
+    var headerIdx = 0, best = -1;
+    lineArrs.forEach(function (a, i) { var f = a.filter(function (c) { return String(c).trim(); }).length; if (f > best) { best = f; headerIdx = i; } });
+    var gaps = []; for (var gi = 1; gi < lines.length; gi++) gaps.push(lines[gi][0].cy - lines[gi - 1][0].cy);
+    var medGap = medianOf(gaps.filter(function (g) { return g > 0; })) || medH, recSep = medGap * 1.5;
+    var bigGaps = gaps.filter(function (g) { return g > recSep; }).length;
+    var multiLine = gaps.length > 0 && bigGaps >= Math.max(1, Math.floor(gaps.length * 0.15)) && bigGaps <= gaps.length * 0.75;
+    var out = [];
+    for (var li = 0; li < lines.length; li++) {
+      if (li < headerIdx) { out.push([coerce(lines[li].map(function (w) { return w.str; }).join(" "))]); continue; }
+      if (li === headerIdx) { out.push(lineArrs[li].slice()); continue; }
+      if (!multiLine) { out.push(lineArrs[li].slice()); continue; }
+      var gap = lines[li][0].cy - lines[li - 1][0].cy;
+      if (gap > recSep) { out.push(lineArrs[li].slice()); }
+      else { var prev = out[out.length - 1]; if (prev.length < 2) { out.push(lineArrs[li].slice()); } else { for (var k = 0; k < colCount; k++) if (lineArrs[li][k]) prev[k] = prev[k] ? prev[k] + " " + lineArrs[li][k] : lineArrs[li][k]; } }
     }
+    return out.map(function (r) { return r.length > 1 ? r.map(coerce) : r; });
+  }
+  /* merge nearby line positions into single averaged centers */
+  function clusterCenters(centers, minDist) {
+    if (!centers.length) return [];
+    centers = centers.slice().sort(function (a, b) { return a - b; });
+    var out = [], grp = [centers[0]];
+    for (var i = 1; i < centers.length; i++) {
+      if (centers[i] - grp[grp.length - 1] <= minDist) grp.push(centers[i]);
+      else { out.push(grp.reduce(function (s, v) { return s + v; }, 0) / grp.length); grp = [centers[i]]; }
+    }
+    out.push(grp.reduce(function (s, v) { return s + v; }, 0) / grp.length);
+    return out;
+  }
 
-    var out = [], lastTbl = null;
-    rows.forEach(function (r, idx) {
-      if (idx < tStart || idx > tEnd) { out.push([coerce(r.map(function (w) { return w.str; }).join(" "))]); lastTbl = null; return; }
-      var arr = rowArrs[idx];
-      if (lastTbl && !String(arr[0]).trim()) {   // continuation line -> merge into previous row
-        for (var k = 0; k < colCount; k++) if (String(arr[k]).trim()) lastTbl[k] = String(lastTbl[k]).trim() ? (lastTbl[k] + " " + arr[k]) : arr[k];
-        return;
+  /* detect the table's ruled lines from a rendered page canvas (single image read).
+     Vertical borders are often segmented per row, so columns are found by ACCUMULATED
+     dark-pixel count down a column. Horizontal rules are continuous, so rows are found
+     by the LONGEST contiguous dark run across a scanline — this rejects text columns
+     that would otherwise masquerade as a vertical line. Returns positions in PDF points. */
+  function detectGrid(canvas, pageWpts, pageHpts) {
+    try {
+      var W = canvas.width, H = canvas.height, ctx = canvas.getContext("2d");
+      var data = ctx.getImageData(0, 0, W, H).data;
+      var colDark = new Array(W).fill(0), hIdx = [];
+      for (var y = 0; y < H; y++) {
+        var off = y * W * 4, run = 0, best = 0;
+        for (var x = 0; x < W; x++) {
+          var i = off + x * 4;
+          if ((data[i] + data[i + 1] + data[i + 2]) < 480) { colDark[x]++; run++; if (run > best) best = run; }
+          else run = 0;
+        }
+        if (best >= W * 0.5) hIdx.push(y);
       }
-      out.push(arr); lastTbl = arr;
+      var vIdx = []; for (var x2 = 0; x2 < W; x2++) if (colDark[x2] >= H * 0.40) vIdx.push(x2);
+      var vl = clusterCenters(vIdx, Math.max(2, W * 0.004)).map(function (c) { return c * pageWpts / W; });
+      var hl = clusterCenters(hIdx, Math.max(2, H * 0.004)).map(function (c) { return c * pageHpts / H; });
+      return { vlines: vl.length >= 2 ? vl : null, hlines: hl.length >= 2 ? hl : null };
+    } catch (e) { return { vlines: null, hlines: null }; }
+  }
+
+  /* true lattice extraction: drop each word into the grid cell bounded by the
+     detected vertical (column) and horizontal (row) rules. Multi-line records
+     fall between the same two horizontal rules, so they merge into one row. */
+  function buildLattice(words, vlines, hlines) {
+    var cols = vlines.slice().sort(function (a, b) { return a - b; });
+    var rows = hlines.slice().sort(function (a, b) { return a - b; });
+    var nc = cols.length - 1, nr = rows.length - 1;
+    if (nc < 1 || nr < 1) return [];
+    function bandOf(v, edges) { for (var k = 0; k < edges.length - 1; k++) if (v >= edges[k] && v < edges[k + 1]) return k; return -1; }
+    var grid = []; for (var r = 0; r < nr; r++) { var rowArr = []; for (var c = 0; c < nc; c++) rowArr.push([]); grid.push(rowArr); }
+    words.forEach(function (w) {
+      var cx = w.x + w.w / 2, cy = w.y + w.h / 2;
+      var ci = bandOf(cx, cols), ri = bandOf(cy, rows);
+      if (ci < 0 || ri < 0) return;
+      grid[ri][ci].push(w);
     });
+    var out = [];
+    for (var r2 = 0; r2 < nr; r2++) {
+      var rowOut = [], any = false;
+      for (var c2 = 0; c2 < nc; c2++) {
+        var cell = grid[r2][c2];
+        cell.sort(function (a, b) { var dy = (a.y + a.h / 2) - (b.y + b.h / 2); if (Math.abs(dy) > (a.h || 8) * 0.6) return dy; return a.x - b.x; });
+        var txt = cell.map(function (w) { return w.str; }).join(" ").replace(/\s+/g, " ").trim();
+        if (txt) any = true;
+        rowOut.push(txt);
+      }
+      if (any) out.push(rowOut.map(coerce));
+    }
     return out;
   }
   function autoWidth(ws, grid, XLSX) {
