@@ -3,6 +3,23 @@
 All notable changes to ProPDF, newest first. ProPDF is a 100% local, DPDP-aligned
 PDF suite by **Kothari Jain & Associates**.
 
+## v10.5 — PDF → Excel: true grid extraction + sheet layout
+- **PDF → Excel** now reads the table as a **true grid** — it detects both the
+  **horizontal and vertical ruled lines** and places every word in its exact cell.
+  Multi-line entries (e.g. wrapped bank-statement transactions) now stay in **one
+  row on every page**. This fixes the bug where the first rows of pages 2, 3, …
+  were dumped into a single column, and a stray extra column that shifted some
+  pages out of alignment.
+- New **Layout** option: export **one combined sheet** (default) or **one sheet
+  per page**, like the major online converters.
+- Repeated column headers on later pages are removed automatically in combined mode.
+
+## v10.4 — Much better PDF → Excel
+- **PDF → Excel** now detects the table's **ruled lines** for exact column splits,
+  **groups multi-line rows** (e.g. bank-statement transactions) into a single row,
+  and keeps amounts as numbers. Borderless tables fall back to smart whitespace
+  detection. A major accuracy improvement on real statements.
+
 ## v10.3 — Fix: Redaction preview shows full pages
 - **Redact** — the preview is now a single scrollable area that shows every page at
   full height. Scroll through all pages and draw redaction boxes anywhere.
