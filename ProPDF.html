@@ -363,6 +363,26 @@ a:hover { text-decoration: underline; }
 .ov-handle { position: absolute; width: 20px; height: 20px; background: var(--brand); color: #fff; border: 2px solid #fff; border-radius: 50%; display: grid; place-items: center; font-size: 11px; box-shadow: var(--shadow-sm); }
 .ov-res { right: -11px; bottom: -11px; cursor: nwse-resize; }
 .ov-rot { left: 50%; top: -30px; transform: translateX(-50%); cursor: grab; }
+
+/* ---- password prompt modal ---- */
+.pw-overlay { position: fixed; inset: 0; z-index: 9999; display: grid; place-items: center;
+  background: rgba(10, 16, 30, .55); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
+.pw-box { width: min(92vw, 420px); background: var(--glass-2); border: 1px solid var(--glass-brd);
+  border-radius: var(--radius); box-shadow: var(--shadow-lg); padding: 26px 24px; text-align: center;
+  -webkit-backdrop-filter: var(--blur); backdrop-filter: var(--blur); }
+.pw-box .pw-ic { font-size: 34px; margin-bottom: 6px; }
+.pw-box h3 { margin: 0 0 8px; font-size: 19px; color: var(--text); }
+.pw-box p { margin: 0 0 14px; color: var(--text-muted); font-size: 14px; }
+.pw-box .pw-wrong { color: var(--danger); font-weight: 600; margin-top: -6px; }
+.pw-input { width: 100%; padding: 12px 14px; border-radius: var(--radius-sm); border: 1px solid var(--glass-brd);
+  background: var(--glass); color: var(--text); font-size: 15px; outline: none; }
+.pw-input:focus { border-color: var(--brand); box-shadow: 0 0 0 4px rgba(59,110,245,.16); }
+.pw-btns { display: flex; gap: 10px; justify-content: flex-end; margin-top: 18px; }
+.pw-btns button { padding: 10px 18px; border-radius: var(--radius-sm); border: 1px solid var(--glass-brd);
+  font-size: 14px; font-weight: 600; cursor: pointer; transition: transform var(--speed), box-shadow var(--speed); }
+.pw-btns button:hover { transform: translateY(-1px); box-shadow: var(--shadow-md); }
+.pw-cancel { background: var(--glass); color: var(--text); }
+.pw-ok { background: var(--grad); color: #fff; border-color: transparent; }
   </style>
 </head>
 <body>
@@ -821,6 +841,10 @@ a:hover { text-decoration: underline; }
   }
 
   var CHANGELOG = [
+    { v: "v10.6", title: "PDF \u2192 Excel works on any bank statement + password prompt", items: [
+      "Rebuilt the table engine so PDF \u2192 Excel reads almost any bank statement layout \u2014 ruled grids, partly-ruled, and completely borderless ones. Columns are detected once across the whole document so every page lines up, and wrapped multi-line entries are merged into a single transaction row using a date anchor. Tested across HDFC, ICICI, SBI, IDBI, Federal, South Indian Bank and Bank of Baroda formats.",
+      "Password-protected PDFs now prompt for the password before any tool runs, and the file is unlocked in memory \u2014 no more blank output. Applies to every tool (Excel, Word, merge, split, rotate, compress, watermark, page numbers, redact and more)."
+    ] },
     { v: "v10.5", title: "PDF \u2192 Excel \u2014 true grid extraction + sheet layout", items: [
       "PDF \u2192 Excel now reads the table as a true grid: it detects both the horizontal and vertical ruled lines and drops every word into its exact cell. Multi-line entries (like wrapped bank-statement transactions) now stay in one row on every page \u2014 fixing the earlier bug where the first rows of later pages were dumped into a single column, and a stray extra column that shifted some pages.",
       "New Layout choice: export all pages into one combined sheet (default) or one sheet per page.",
@@ -943,7 +967,7 @@ a:hover { text-decoration: underline; }
   window.ProPDF = App;
 
   /* ---------------- version + update check ---------------- */
-  App.VERSION = "v10.5";
+  App.VERSION = "v10.6";
   var GC_ENDPOINT = "";
   function initAnalytics(url) {
     if (GC_ENDPOINT || !url || typeof location === "undefined" || !/^https?:/.test(location.protocol)) return;
@@ -1144,10 +1168,76 @@ a:hover { text-decoration: underline; }
      CONVERT FROM PDF
      ==================================================================== */
 
-  /* shared: load a pdf.js doc from a File */
-  function loadPdfjs(file) {
+  /* ===== password-aware PDF loading =====
+     Protected PDFs used to silently produce blank output. Now any PDF that needs
+     an open password prompts for it first, and the file is decrypted before the
+     tool runs. Unencrypted files and images pass straight through. */
+  function isEncryptedPdf(ab) {
+    try {
+      var u = new Uint8Array(ab), s = "";
+      for (var i = 0; i < u.length; i++) s += String.fromCharCode(u[i]);
+      return /\/Encrypt[\s\/<\[]/.test(s);
+    } catch (e) { return false; }
+  }
+  function askPassword(name, wrong) {
+    return new Promise(function (resolve) {
+      var ov = el("div", { class: "pw-overlay" });
+      ov.innerHTML = '<div class="pw-box"><div class="pw-ic">🔒</div>'
+        + '<h3>Password required</h3>'
+        + '<p>“' + P.escapeHtml(name) + '” is protected. Enter its password to continue.</p>'
+        + (wrong ? '<p class="pw-wrong">Incorrect password — please try again.</p>' : '')
+        + '<input type="password" class="pw-input" placeholder="Enter PDF password" />'
+        + '<div class="pw-btns"><button class="pw-cancel">Cancel</button><button class="pw-ok">Unlock</button></div></div>';
+      document.body.appendChild(ov);
+      var inp = ov.querySelector(".pw-input");
+      function done(v) { if (ov.parentNode) ov.parentNode.removeChild(ov); resolve(v); }
+      ov.querySelector(".pw-ok").onclick = function () { done(inp.value || ""); };
+      ov.querySelector(".pw-cancel").onclick = function () { done(null); };
+      ov.addEventListener("mousedown", function (e) { if (e.target === ov) done(null); });
+      inp.addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); done(inp.value || ""); } else if (e.key === "Escape") done(null); });
+      setTimeout(function () { try { inp.focus(); } catch (x) {} }, 60);
+    });
+  }
+  function cancelErr() { var e = new Error("Cancelled — no password entered."); e.cancelled = true; return e; }
+  /* open a pdf.js document from a File, prompting for a password when needed.
+     resolves { doc, password, ab } */
+  function openPdfjsDoc(file) {
     return Promise.all([L.ensure("pdfjs"), P.readAB(file)]).then(function (r) {
-      return window.pdfjsLib.getDocument({ data: r[1] }).promise;
+      var ab = r[1];
+      function attempt(password, wrong) {
+        var params = { data: ab.slice(0) };
+        if (password != null) params.password = password;
+        return window.pdfjsLib.getDocument(params).promise.then(function (doc) {
+          return { doc: doc, password: (password != null ? password : null), ab: ab };
+        }, function (e) {
+          var nm = (e && e.name) || "";
+          if (nm === "PasswordException" || /password/i.test((e && e.message) || "")) {
+            return askPassword(file.name, !!wrong).then(function (pw) {
+              if (pw == null) throw cancelErr();
+              return attempt(pw, true);
+            });
+          }
+          throw e;
+        });
+      }
+      return attempt(null, false);
+    });
+  }
+  /* shared: load a pdf.js doc from a File (password-aware) */
+  function loadPdfjs(file) { return openPdfjsDoc(file).then(function (s) { return s.doc; }); }
+  /* get an ArrayBuffer for editing, DECRYPTED if the file was protected.
+     Images / unencrypted PDFs are returned untouched (no prompt). */
+  function readPdfAB(file) {
+    return P.readAB(file).then(function (ab) {
+      if (!isEncryptedPdf(ab)) return ab;
+      return openPdfjsDoc(file).then(function (s) {
+        if (s.doc && s.doc.saveDocument) {
+          return s.doc.saveDocument().then(function (bytes) {
+            return (bytes && bytes.buffer) ? bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength) : bytes;
+          }, function () { return s.ab; });
+        }
+        return s.ab;
+      });
     });
   }
 
@@ -1401,21 +1491,31 @@ a:hover { text-decoration: underline; }
             else io.res.ok("Extracted " + totalCells + " cells from " + n + " page(s)" + (usedOcr ? " (OCR used for scanned pages)" : "") + ".");
             go.disabled = false;
           }
-          function page() {
-            if (i > n) return finish();
+          var pageData = [];
+          function collect() {
+            if (i > n) return process();
             io.prog.set(((i - 1) / n) * 100, "Analyzing page " + i + " of " + n + "…");
             return getPageContent(pdf, i, {
               force: force, langs: langs, detectLines: true,
               onProgress: function (pr) { io.prog.set(((i - 1 + pr) / n) * 100, "OCR page " + i + " of " + n + " — " + Math.round(pr * 100) + "%"); }
             }).then(function (pc) {
               if (pc.ocr) usedOcr = true;
-              var grid = (pc.words && pc.words.length) ? buildTable(pc.words, pc.vlines, pc.hlines) : [];
-              if (!grid.length) grid = pc.text ? pc.text.split(/\r?\n/).map(function (l) { return [l]; }) : [[""]];
-              emit(grid);
-              i++; return page();
+              pageData.push(pc);
+              i++; return collect();
             });
           }
-          return page();
+          function process() {
+            io.prog.set(96, "Building tables…");
+            var grids = pdfToGrids(pageData);
+            grids.forEach(function (grid, idx) {
+              i = idx + 1;
+              if (!grid || !grid.length) { var pc = pageData[idx]; grid = (pc && pc.text) ? pc.text.split(/\r?\n/).map(function (l) { return [l]; }) : [[""]]; }
+              emit(grid);
+            });
+            return finish();
+          }
+          i = 1;
+          return collect();
         }).catch(fail(io, go));
       }
     }
@@ -1452,7 +1552,7 @@ a:hover { text-decoration: underline; }
                 });
               }
               io.prog.set((i / zone.files.length) * 100, "Merging file " + (i + 1));
-              return P.readAB(zone.files[i]).then(function (ab) {
+              return readPdfAB(zone.files[i]).then(function (ab) {
                 return PDFLib.PDFDocument.load(ab, { ignoreEncryption: true }).then(function (src) {
                   return out.copyPages(src, src.getPageIndices()).then(function (pages) {
                     pages.forEach(function (p) { out.addPage(p); });
@@ -1494,7 +1594,7 @@ a:hover { text-decoration: underline; }
         if (!zone.files.length) return P.toast("Add a PDF", true);
         io.res.clear(); io.prog.show("Loading engine…"); go.disabled = true;
         var mode = document.getElementById("spMode").value;
-        Promise.all([L.ensure("pdfLib"), P.readAB(zone.files[0])]).then(function (r) {
+        Promise.all([L.ensure("pdfLib"), readPdfAB(zone.files[0])]).then(function (r) {
           var PDFLib = window.PDFLib;
           return PDFLib.PDFDocument.load(r[1], { ignoreEncryption: true }).then(function (src) {
             var total = src.getPageCount();
@@ -1574,7 +1674,7 @@ a:hover { text-decoration: underline; }
         if (!zone.files.length) return P.toast("Add a PDF", true);
         io.res.clear(); io.prog.show("Loading engine…"); go.disabled = true;
         var ang = parseInt(document.getElementById("rotAngle").value, 10);
-        Promise.all([L.ensure("pdfLib"), P.readAB(zone.files[0])]).then(function (r) {
+        Promise.all([L.ensure("pdfLib"), readPdfAB(zone.files[0])]).then(function (r) {
           var PDFLib = window.PDFLib;
           return PDFLib.PDFDocument.load(r[1], { ignoreEncryption: true }).then(function (doc) {
             var pages = doc.getPages();
@@ -1616,7 +1716,7 @@ a:hover { text-decoration: underline; }
       function load(files) {
         if (!files.length) return;
         io.res.clear(); thumbs.innerHTML = ""; go.disabled = true; io.prog.show("Rendering thumbnails…");
-        P.readAB(files[0]).then(function (ab) {
+        readPdfAB(files[0]).then(function (ab) {
           srcAB = ab.slice(0);
           return L.ensure("pdfjs").then(function () { return window.pdfjsLib.getDocument({ data: ab }).promise; });
         }).then(function (pdf) {
@@ -1862,7 +1962,7 @@ a:hover { text-decoration: underline; }
         var size = parseFloat(document.getElementById("wmSize").value) || 60;
         var col = hexRgb(document.getElementById("wmColor").value);
         io.res.clear(); io.prog.show("Loading engine…"); go.disabled = true;
-        Promise.all([L.ensure("pdfLib"), P.readAB(zone.files[0])]).then(function (r) {
+        Promise.all([L.ensure("pdfLib"), readPdfAB(zone.files[0])]).then(function (r) {
           var PDFLib = window.PDFLib;
           return PDFLib.PDFDocument.load(r[1], { ignoreEncryption: true }).then(function (doc) {
             return doc.embedFont(PDFLib.StandardFonts.HelveticaBold).then(function (font) {
@@ -1906,7 +2006,7 @@ a:hover { text-decoration: underline; }
         var fmt = document.getElementById("pnFmt").value;
         var pre = document.getElementById("pnPre").value || "";
         io.res.clear(); io.prog.show("Loading engine…"); go.disabled = true;
-        Promise.all([L.ensure("pdfLib"), P.readAB(zone.files[0])]).then(function (r) {
+        Promise.all([L.ensure("pdfLib"), readPdfAB(zone.files[0])]).then(function (r) {
           var PDFLib = window.PDFLib;
           return PDFLib.PDFDocument.load(r[1], { ignoreEncryption: true }).then(function (doc) {
             return doc.embedFont(PDFLib.StandardFonts.Helvetica).then(function (font) {
@@ -1945,7 +2045,7 @@ a:hover { text-decoration: underline; }
       function run() {
         if (!zone.files.length) return P.toast("Add a PDF", true);
         io.res.clear(); io.prog.show("Loading engine…"); go.disabled = true;
-        Promise.all([L.ensure("pdfLib"), P.readAB(zone.files[0])]).then(function (r) {
+        Promise.all([L.ensure("pdfLib"), readPdfAB(zone.files[0])]).then(function (r) {
           var PDFLib = window.PDFLib;
           return PDFLib.PDFDocument.load(r[1], { ignoreEncryption: true }).then(function (src) {
             // rebuild a clean doc to drop encryption dictionary
@@ -2117,7 +2217,7 @@ a:hover { text-decoration: underline; }
 
   function fail(io, go) {
     return function (e) {
-      console.error(e);
+      if (!(e && e.cancelled)) console.error(e);
       io.prog.hide(); if (go) go.disabled = false;
       io.res.err((e && e.message) ? e.message : "Something went wrong. If this is a scanned PDF, try the OCR tool.");
     };
@@ -2485,6 +2585,188 @@ a:hover { text-decoration: underline; }
     }
     return out;
   }
+  /* ============================================================
+     ROBUST PDF -> TABLE ENGINE (bank statements & general tables)
+     Two modes, chosen per-document:
+       LATTICE  - when most pages have a clean ruled grid (>=5 vertical
+                  AND >=5 horizontal detected lines): place each word in the
+                  grid cell bounded by the rules (most accurate when present).
+       STREAM   - otherwise: detect columns once GLOBALLY from whitespace gaps
+                  across all transaction rows (so every page aligns), then group
+                  wrapped/multi-line records into one row by a date "anchor"
+                  column. Works on borderless statements with no ruled lines.
+     ============================================================ */
+  var MON_RE = "(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)";
+  var DATE_PREFIX = new RegExp("^\\s*\\d{1,2}[\\/\\-.]\\d{1,2}[\\/\\-.]\\d{2,4}|^\\s*\\d{1,2}[\\-\\s]" + MON_RE + "[a-z]*[\\-\\s]\\d{2,4}", "i");
+  var DATE_ANY = new RegExp("\\d{1,2}[\\/\\-.]\\d{1,2}[\\/\\-.]\\d{2,4}|\\d{1,2}[\\s\\-]" + MON_RE + "[a-z]*[\\s\\-]\\d{2,4}", "i");
+  function cellIsDate(s) { return DATE_PREFIX.test(String(s == null ? "" : s).trim()); }
+
+  function wordsToLines(words) {
+    words.forEach(function (w) { w.x1 = w.x + w.w; w.cy = w.y + w.h / 2; });
+    var medH = medianOf(words.map(function (w) { return w.h; })) || 10;
+    var ws = words.slice().sort(function (a, b) { return a.cy - b.cy || a.x - b.x; });
+    var lines = [[ws[0]]];
+    for (var i = 1; i < ws.length; i++) {
+      var cur = lines[lines.length - 1];
+      var ref = cur.reduce(function (s, w) { return s + w.cy; }, 0) / cur.length;
+      if (Math.abs(ws[i].cy - ref) <= medH * 0.6) cur.push(ws[i]);
+      else lines.push([ws[i]]);
+    }
+    lines.forEach(function (l) { l.sort(function (a, b) { return a.x - b.x; }); });
+    lines.sort(function (a, b) {
+      var ay = Math.min.apply(null, a.map(function (w) { return w.cy; }));
+      var by = Math.min.apply(null, b.map(function (w) { return w.cy; }));
+      return ay - by;
+    });
+    return { lines: lines, medH: medH };
+  }
+
+  /* index range [first,last] of lines that look like the transaction region
+     (a date appears in the left ~55% of the line) */
+  function regionIdx(lines, pminX, pmaxX) {
+    var leftlim = pminX + (pmaxX - pminX) * 0.55, datey = [];
+    lines.forEach(function (l) {
+      var lt = l.filter(function (w) { return w.x < leftlim; }).map(function (w) { return w.str; }).join(" ");
+      datey.push(DATE_ANY.test(lt));
+    });
+    var f = datey.indexOf(true);
+    if (f < 0) return null;
+    var last = datey.length - 1; while (last >= 0 && !datey[last]) last--;
+    return [f, last];
+  }
+
+  /* column boundaries from vertical whitespace gaps that stay empty across
+     (almost) all rows in the region */
+  function streamColumns(region, minX, maxX, medH) {
+    var binw = 2.0, nb = Math.floor((maxX - minX) / binw) + 2, cov = new Array(nb).fill(0);
+    region.forEach(function (l) {
+      var m = new Array(nb).fill(false);
+      l.forEach(function (w) {
+        var a = Math.floor((w.x - minX) / binw), b = Math.floor((w.x1 - minX) / binw) + 1;
+        for (var k = Math.max(0, a); k < Math.min(b, nb); k++) m[k] = true;
+      });
+      for (var k = 0; k < nb; k++) if (m[k]) cov[k]++;
+    });
+    var nL = Math.max(1, region.length), gapmax = Math.floor(nL * 0.10), minsep = Math.max(binw * 1.5, medH * 0.5);
+    var seps = [], p = 0;
+    while (p < nb) {
+      if (cov[p] <= gapmax) {
+        var j = p; while (j < nb && cov[j] <= gapmax) j++;
+        if ((j - p) * binw >= minsep) seps.push([minX + p * binw, minX + j * binw]);
+        p = j;
+      } else p++;
+    }
+    var bounds = [minX - 1]; seps.forEach(function (s) { bounds.push((s[0] + s[1]) / 2); }); bounds.push(maxX + 1);
+    return bounds;
+  }
+
+  function colOfB(cx, b) { for (var k = 0; k < b.length - 1; k++) if (cx >= b[k] && cx < b[k + 1]) return k; return cx < b[0] ? 0 : b.length - 2; }
+
+  function cellsOf(l, bounds) {
+    var nc = bounds.length - 1, arr = new Array(nc).fill("");
+    l.slice().sort(function (a, b) { return a.x - b.x; }).forEach(function (w) {
+      var k = colOfB((w.x + w.x1) / 2, bounds);
+      arr[k] = arr[k] ? arr[k] + " " + w.str : w.str;
+    });
+    return arr;
+  }
+
+  /* remove columns that are essentially empty across the whole document
+     (spurious splits from stray left/right glyphs) */
+  function dropEmptyCols(grids, nc) {
+    var total = 0, colCount = new Array(nc).fill(0);
+    grids.forEach(function (g) { g.forEach(function (r) { if (r.length > 1) { total++; for (var k = 0; k < nc; k++) if (String(r[k] == null ? "" : r[k]).trim()) colCount[k]++; } }); });
+    if (!total) return grids;
+    var keep = []; for (var k = 0; k < nc; k++) if (colCount[k] >= total * 0.03) keep.push(k);
+    if (keep.length < 2) return grids;
+    return grids.map(function (g) { return g.map(function (r) { return r.length > 1 ? keep.map(function (k) { return r[k]; }) : r; }); });
+  }
+
+  /* STREAM pipeline across the whole document (consistent columns everywhere) */
+  function buildStreamDoc(pages) {
+    var allWords = [], perPage = [];
+    pages.forEach(function (p) {
+      var w = (p.words || []);
+      if (!w.length) { perPage.push(null); return; }
+      var L = wordsToLines(w);
+      var pminX = Math.min.apply(null, w.map(function (x) { return x.x; }));
+      var pmaxX = Math.max.apply(null, w.map(function (x) { return x.x + x.w; }));
+      perPage.push({ lines: L.lines, ri: regionIdx(L.lines, pminX, pmaxX) });
+      allWords = allWords.concat(w);
+    });
+    if (!allWords.length) return pages.map(function () { return []; });
+    var minX = Math.min.apply(null, allWords.map(function (w) { return w.x; }));
+    var maxX = Math.max.apply(null, allWords.map(function (w) { return w.x + w.w; }));
+    var medH = medianOf(allWords.map(function (w) { return w.h; })) || 10;
+    var regionLines = [];
+    perPage.forEach(function (pp) { if (pp && pp.ri) regionLines = regionLines.concat(pp.lines.slice(pp.ri[0], pp.ri[1] + 1)); });
+    var src = regionLines.slice();
+    if (!src.length) perPage.forEach(function (pp) { if (pp) src = src.concat(pp.lines); });
+    var bounds = streamColumns(src, minX, maxX, medH), nc = bounds.length - 1;
+    // date anchor column = leftmost column that holds a date in most region rows
+    var votes = {}, maxv = 0;
+    regionLines.forEach(function (l) { cellsOf(l, bounds).forEach(function (c, k) { if (cellIsDate(c)) { votes[k] = (votes[k] || 0) + 1; if (votes[k] > maxv) maxv = votes[k]; } }); });
+    var anchor = 0; for (var ak = 0; ak < nc; ak++) { if ((votes[ak] || 0) >= maxv * 0.6 && maxv > 0) { anchor = ak; break; } }
+    var grids = [];
+    perPage.forEach(function (pp) {
+      if (!pp) { grids.push([]); return; }
+      var cells = pp.lines.map(function (l) { return cellsOf(l, bounds); });
+      var out = [];
+      function joinRow(c) { return c.filter(function (x) { return String(x == null ? "" : x).trim(); }).join(" "); }
+      if (!pp.ri) {
+        cells.forEach(function (c) { var j = joinRow(c); if (j) out.push([j]); });
+        grids.push(out); return;
+      }
+      var first = pp.ri[0], last = pp.ri[1];
+      for (var i = 0; i < first; i++) { var j0 = joinRow(cells[i]); if (j0) out.push([j0]); }
+      var i2 = first;
+      while (i2 <= last) {
+        var rec = cells[i2].slice(); i2++;
+        while (i2 <= last && !cellIsDate(cells[i2][anchor])) {
+          for (var k2 = 0; k2 < nc; k2++) { if (cells[i2][k2]) rec[k2] = rec[k2] ? rec[k2] + " " + cells[i2][k2] : cells[i2][k2]; }
+          i2++;
+        }
+        out.push(rec);
+      }
+      for (var i3 = last + 1; i3 < pp.lines.length; i3++) { var j3 = joinRow(cells[i3]); if (j3) out.push([j3]); }
+      grids.push(out);
+    });
+    grids = splitAnchorDate(grids, anchor);
+    var ncFinal = 0; grids.forEach(function (g) { g.forEach(function (r) { if (r.length > ncFinal) ncFinal = r.length; }); });
+    grids = dropEmptyCols(grids, ncFinal);
+    return grids.map(function (g) { return g.map(function (r) { return r.length > 1 ? r.map(coerce) : r; }); });
+  }
+
+  /* if the date-anchor column also swallowed the following text because there was
+     no whitespace gap after the date (e.g. "02 Apr 2025 UPI/..."), split it into a
+     clean date column + the remainder. A pure time suffix (HH:MM) stays with the date. */
+  function splitAnchorDate(grids, anchor) {
+    var TIME = /^\d{1,2}:\d{2}/;
+    var tot = 0, hit = 0;
+    grids.forEach(function (g) { g.forEach(function (r) { if (r.length > 1) { tot++; var c = String(r[anchor] == null ? "" : r[anchor]).trim(); var m = c.match(DATE_PREFIX); if (m) { var rem = c.slice(m[0].length).trim(); if (rem && !TIME.test(rem)) hit++; } } }); });
+    if (!tot || hit < tot * 0.5) return grids;
+    return grids.map(function (g) {
+      return g.map(function (r) {
+        if (r.length <= 1) return r;
+        var c = String(r[anchor] == null ? "" : r[anchor]).trim(), m = c.match(DATE_PREFIX), datePart, rem;
+        if (m) { datePart = m[0].trim(); rem = c.slice(m[0].length).trim(); } else { datePart = c; rem = ""; }
+        var out = r.slice(0, anchor); out.push(datePart); out.push(rem);
+        for (var k = anchor + 1; k < r.length; k++) out.push(r[k]);
+        return out;
+      });
+    });
+  }
+
+  /* choose mode per-document and return one grid (array of rows) per page */
+  function pdfToGrids(pages) {
+    var gridPages = 0;
+    pages.forEach(function (p) { if ((p.vlines || []).length >= 5 && (p.hlines || []).length >= 5) gridPages++; });
+    if (pages.length && gridPages >= pages.length * 0.6) {
+      return pages.map(function (p) { return (p.words && p.words.length) ? buildLattice(p.words, p.vlines, p.hlines) : []; });
+    }
+    return buildStreamDoc(pages);
+  }
+
   function autoWidth(ws, grid, XLSX) {
     if (!grid.length) return;
     var widths = [];
@@ -2602,7 +2884,7 @@ a:hover { text-decoration: underline; }
         if (!files.length) return;
         st.boxes = {}; st.rendered = false; detList.innerHTML = ""; viewer.innerHTML = "";
         io.res.clear(); io.prog.show("Rendering pages…"); bScan.disabled = true; bApply.disabled = true;
-        P.readAB(files[0]).then(function (ab) {
+        readPdfAB(files[0]).then(function (ab) {
           st.bytes = ab.slice(0);
           return L.ensure("pdfjs").then(function () { return window.pdfjsLib.getDocument({ data: ab }).promise; });
         }).then(function (pdf) {
@@ -2842,7 +3124,7 @@ a:hover { text-decoration: underline; }
     render: function (panel) {
       var base = { bytes: null }, ov = { bytes: null, isPdf: false, url: null, aspect: 1 };
       var W = { xc: 50, yc: 50, w: 40, rot: 0 };
-      var zb = P.fileZone({ accept: "application/pdf,.pdf", hint: "base PDF", preview: false, onChange: function (f) { if (f[0]) P.readAB(f[0]).then(function (ab) { base.bytes = ab; preview(); }); } });
+      var zb = P.fileZone({ accept: "application/pdf,.pdf", hint: "base PDF", preview: false, onChange: function (f) { if (f[0]) readPdfAB(f[0]).then(function (ab) { base.bytes = ab; preview(); }); } });
       var zo = P.fileZone({ accept: "application/pdf,.pdf,image/png,image/jpeg", hint: "overlay: PDF / PNG / JPG", preview: false, onChange: loadOverlay });
       panel.appendChild(el("div", { class: "field" }, "<label>1) Base document</label>")); panel.appendChild(zb.el);
       panel.appendChild(el("div", { class: "field", style: "margin-top:10px" }, "<label>2) Overlay (letterhead / stamp / signature / logo)</label>")); panel.appendChild(zo.el);
@@ -2861,7 +3143,7 @@ a:hover { text-decoration: underline; }
       function loadOverlay(f) {
         if (!f[0]) return;
         ov.isPdf = /pdf$/i.test(f[0].type) || /\.pdf$/i.test(f[0].name);
-        P.readAB(f[0]).then(function (ab) {
+        readPdfAB(f[0]).then(function (ab) {
           ov.bytes = ab;
           if (!ov.isPdf) {
             ov.url = URL.createObjectURL(new Blob([ab.slice(0)]));
@@ -2968,8 +3250,8 @@ a:hover { text-decoration: underline; }
     long: "Compare two versions of a document. Text mode highlights added / removed / changed words; Visual mode highlights pixel-level changes page by page. Auto-OCRs scanned files. Export a difference report.",
     render: function (panel) {
       var A = { bytes: null }, B = { bytes: null };
-      var za = P.fileZone({ accept: "application/pdf,.pdf", hint: "original (A)", preview: false, onChange: function (f) { if (f[0]) P.readAB(f[0]).then(function (ab) { A.bytes = ab; }); } });
-      var zb = P.fileZone({ accept: "application/pdf,.pdf", hint: "revised (B)", preview: false, onChange: function (f) { if (f[0]) P.readAB(f[0]).then(function (ab) { B.bytes = ab; }); } });
+      var za = P.fileZone({ accept: "application/pdf,.pdf", hint: "original (A)", preview: false, onChange: function (f) { if (f[0]) readPdfAB(f[0]).then(function (ab) { A.bytes = ab; }); } });
+      var zb = P.fileZone({ accept: "application/pdf,.pdf", hint: "revised (B)", preview: false, onChange: function (f) { if (f[0]) readPdfAB(f[0]).then(function (ab) { B.bytes = ab; }); } });
       panel.appendChild(el("div", { class: "field" }, "<label>Document A (original)</label>")); panel.appendChild(za.el);
       panel.appendChild(el("div", { class: "field", style: "margin-top:10px" }, "<label>Document B (revised)</label>")); panel.appendChild(zb.el);
       panel.appendChild(row(
@@ -3076,7 +3358,7 @@ a:hover { text-decoration: underline; }
     long: "Runs OCR, then lets you review and correct the recognised text, flags invalid PAN/GSTIN/Aadhaar/CIN/IFSC via checksum validation, and exports to TXT, Word, Excel or a searchable PDF (image + invisible, selectable text layer).",
     render: function (panel) {
       var st = { bytes: null, pages: [] }; // pages: [{text, words, w, h, canvasW, canvasH}]
-      var zone = P.fileZone({ accept: "application/pdf,.pdf,image/*", hint: "scanned PDF or image", preview: false, onChange: function (f) { if (f[0]) { st.file = f[0]; P.readAB(f[0]).then(function (ab) { st.bytes = ab; }); } } });
+      var zone = P.fileZone({ accept: "application/pdf,.pdf,image/*", hint: "scanned PDF or image", preview: false, onChange: function (f) { if (f[0]) { st.file = f[0]; readPdfAB(f[0]).then(function (ab) { st.bytes = ab; }); } } });
       panel.appendChild(zone.el);
       panel.appendChild(row(field("OCR language", '<select id="wbLang">' + OCR_OPTS + '</select>')));
       var io = actionUI(panel);

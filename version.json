@@ -1,5 +1,5 @@
 {
-  "version": "v10.5",
-  "notes": "PDF to Excel now reads the full table grid (rows + columns) - fixes merged top rows on later pages and column shift; adds one-sheet / per-page layout choice",
+  "version": "v10.6",
+  "notes": "PDF to Excel now handles almost any bank statement layout (ruled, partly-ruled or borderless), with consistent columns across pages; protected PDFs now prompt for a password instead of producing blank output",
   "analytics": ""
 }

@@ -3,6 +3,17 @@
 All notable changes to ProPDF, newest first. ProPDF is a 100% local, DPDP-aligned
 PDF suite by **Kothari Jain & Associates**.
 
+## v10.6 — PDF → Excel for any bank statement + password prompt
+- **PDF → Excel** rebuilt to handle almost any statement layout — fully ruled
+  grids, partly-ruled tables, and completely **borderless** statements. Columns
+  are now detected **once across the whole document**, so every page lines up,
+  and wrapped multi-line entries are merged into one transaction row using a
+  **date anchor**. Verified across HDFC, ICICI, SBI, IDBI, Federal, South Indian
+  Bank and Bank of Baroda statement formats.
+- **Password-protected PDFs** now **prompt for the password** before any tool
+  runs and are unlocked in memory — no more blank output. Applies to every tool
+  (Excel, Word, Merge, Split, Rotate, Compress, Watermark, Page Numbers, Redact…).
+
 ## v10.5 — PDF → Excel: true grid extraction + sheet layout
 - **PDF → Excel** now reads the table as a **true grid** — it detects both the
   **horizontal and vertical ruled lines** and places every word in its exact cell.
