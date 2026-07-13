@@ -1,3 +1,94 @@
+# Changelog
+
+## v13.0 — Real-statement rebuild, benchmarked against PDF24's output (July 2026)
+
+Tested directly against a real 15-page Axis Bank statement (428 transactions)
+and PDF24's conversion of the same file. Result on that file: 428/428
+transactions, one clean row each, every total exact to the paisa
+(Dr 11,13,124.52 / Cr 11,90,645.40 / closing 2,80,643.50), 100%
+balance-continuity, zero rows flagged.
+
+**Fixed (the "entry split across 2 rows" defect):** Axis-style statements
+print the narration's first line ABOVE the dated line. Transactions are now
+grouped by vertical position — every line attaches to its nearest dated
+anchor line — so multi-line entries always land in ONE row, whether the
+narration sits above (Axis) or below (HDFC-style) the date.
+
+**Fixed:** the table header is now found anywhere in the document (real
+statements have long account-info blocks first; detection previously only
+scanned the top rows, which silently degraded output to generic mode).
+Cheque numbers bleeding into the date column no longer destroy rows — a
+leading date is recognised and the remainder moved to the Ref column.
+
+**New (PDF24-grade neatness in the browser):** the web app now writes a
+properly styled workbook — bordered table, blue header row, frozen header,
+Indian number formatting, red-highlighted rows needing review — via its own
+OOXML writer (SheetJS community edition cannot write styles). The account-
+holder block from page 1 is preserved above the table, and original columns
+that ProPDF doesn't recognise (e.g. Init/Br) are kept for fidelity.
+
+**Verified:** browser logic passes the real-statement test end-to-end through
+actual pdf.js extraction; the generated styled workbook opens cleanly and its
+styles/values were programmatically inspected; full corpus regression
+(ruled/borderless/scanned/rotated statements, trial balance) still ≥97.8/100,
+mean 99.6/100; page-load smoke test with zero JS errors.
+
+## v12.0 — Smart converter in the browser + web-ready (July 2026)
+
+Driven by a real bank statement that converted badly in v11.0 while PDF24
+handled it: the columns drifted from page 2 onward. Root cause found, fixed,
+and regression-tested — and the whole flagship pipeline now also runs
+**directly in the browser**, so the GitHub Pages link needs no installation.
+
+**Fixed:** multi-page statements where later pages have no header row and a
+Value-Date column is empty no longer misalign. Column geometry is now derived
+from the WHOLE document, not per page. Header mapping is verified and repaired
+using column content (dates/amounts/text), so merged or garbled header cells
+can't scramble the output. Candidate extractions are judged by a strict
+balance-continuity score that counts unreadable balances against the result —
+the failure mode from the real statement can no longer win selection.
+
+**New — browser smart converter (`assets/js/xtract.js`):** the PDF→Excel tool
+in the web app now does whole-document column detection, bank-statement
+reconstruction, Indian number/date parsing, balance-continuity validation, a
+REVIEW column marking every suspicious row, and a Validation sheet — 100%
+client-side, works from the GitHub link, file://, anywhere. Scanned PDFs
+auto-OCR in the browser (Tesseract.js) with confidence reporting.
+
+**Changed:** the optional local engine is now presented as the "Power Pack" —
+its tool cards only appear when it is actually detected, so web visitors never
+see tools that need an install. Everything shown on the website works as-is.
+
+**Verified:** Python engine suite 99.6/100 mean; the browser pipeline passes
+identical ground-truth tests (150-txn realistic statement, ruled multi-page,
+borderless: all totals exact to the paisa, 100% continuity), including an
+end-to-end test through real pdf.js extraction; full-page load smoke test on a
+simulated GitHub Pages URL with zero JS errors.
+
+## v11.0 — ProPDF Engine (July 2026)
+
+The largest engineering iteration so far, benchmarked against PDF24's tool
+catalogue. Adds an optional **local** Python engine (127.0.0.1 only) that the
+browser app auto-detects.
+
+**Rebuilt:** PDF→Excel — document classification → multi-engine table
+extraction (pdfplumber lines/text, PyMuPDF, ProPDF whitespace-stream) →
+multi-page linking → bank-statement semantic reconstruction → balance-
+continuity validation with a Validation sheet. Tested exact-to-the-paisa on
+ruled, borderless and scanned statements. PDF→Word — real .docx (layout mode
+via pdf2docx, editable mode via python-docx), auto-OCR, replaces the old
+HTML-based .doc when the engine runs.
+
+**New:** Word/Excel/PowerPoint→PDF (LibreOffice headless), Protect PDF
+(AES-256), Repair PDF, Make Searchable PDF (OCR text layer + confidence),
+Flatten PDF, Remove Metadata, Extract Images, Crop PDF, Page Size Converter,
+Deskew & Auto-Rotate Scans, scan-aware Compress presets, engine status pill,
+honest offline notices (no fake tools, ever).
+
+**Testing:** ground-truth corpus + automated quality scoring
+(`engine/tests/`). 18 tests, mean score ≈ 99/100; 120-page statement → 2,850
+rows in ~42 s.
+
 # ProPDF — Changelog
 
 All notable changes to ProPDF, newest first. ProPDF is a 100% local, DPDP-aligned

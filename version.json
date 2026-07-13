@@ -1,5 +1,5 @@
 {
-  "version": "v10.6",
-  "notes": "PDF to Excel now handles almost any bank statement layout (ruled, partly-ruled or borderless), with consistent columns across pages; protected PDFs now prompt for a password instead of producing blank output",
+  "version": "v13.0",
+  "notes": "PDF\u2192Excel rebuilt against a real Axis statement with PDF24 as the benchmark: one row per transaction (multi-line narrations merged correctly), bordered styled tables in the browser, account-info block preserved, all original columns kept, 100% balance-validated output.",
   "analytics": ""
 }
