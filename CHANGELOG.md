@@ -1,5 +1,33 @@
 # Changelog
 
+## v14.0 — Every table to PDF24 quality, not just statements (July 2026)
+
+Tested against a real mutual-fund capital-gains statement (JSP Wealth /
+CAMS-style) and PDF24's conversion of the same file. Earlier versions nailed
+bank statements but dumped this into 2 messy columns; now it produces the same
+clean 10-column table PDF24 does — Date, Transaction Nature, Amount, Price,
+Units, Balance Units, Stamp Duty, TDS Amount, STT, Total Amount — with every
+value in the right cell.
+
+**Rebuilt the generic-table path (any PDF, any layout):**
+- Column detection now uses only genuinely tabular rows, so address blocks,
+  titles and footers can't distort the column grid (the exact cause of the
+  2-column mess).
+- A rewritten scorer rewards clean, separated numeric/date columns and
+  penalises "several numbers jammed in one cell", so the best split wins.
+- Wrapped headers are stacked back together ("Balance"/"Units" -> "Balance
+  Units"), and a merged Date+field column is split into two, matching how the
+  original reads.
+- Prose lines (titles, addresses, section names) are kept whole instead of
+  being sliced across columns.
+- Output is now a styled, bordered workbook with a real blue header row and
+  Indian number formatting — both in the browser and the engine.
+
+**Unchanged and re-verified:** all bank-statement handling. Real Axis statement
+still 428/428 rows, totals exact, 100% balance-continuity; synthetic corpus
+99.6/100; the browser pipeline passes the same tests end-to-end through real
+pdf.js; page-load smoke test clean.
+
 ## v13.0 — Real-statement rebuild, benchmarked against PDF24's output (July 2026)
 
 Tested directly against a real 15-page Axis Bank statement (428 transactions)

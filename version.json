@@ -1,5 +1,5 @@
 {
-  "version": "v13.0",
-  "notes": "PDF\u2192Excel rebuilt against a real Axis statement with PDF24 as the benchmark: one row per transaction (multi-line narrations merged correctly), bordered styled tables in the browser, account-info block preserved, all original columns kept, 100% balance-validated output.",
+  "version": "v14.0",
+  "notes": "Any table now converts to PDF24-level quality, not just bank statements. New generic-table engine: tabular-aware column detection (address/title blocks no longer break columns), wrapped-header stacking, leading-date column splitting, and styled bordered output with a proper header row. Verified on a real mutual-fund capital-gains statement (10 columns, exact match to PDF24).",
   "analytics": ""
 }

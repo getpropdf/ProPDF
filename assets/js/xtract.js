@@ -85,7 +85,8 @@
     return rows;
   }
 
-  function findBounds(rowsBasis, minGap) {
+  function findBounds(rowsBasis, minGap, threshFrac) {
+    threshFrac = threshFrac || 0.08;
     var RES = 2, all = [];
     rowsBasis.forEach(function (r) { r.forEach(function (w) { all.push(w); }); });
     if (!all.length) return [];
@@ -93,15 +94,28 @@
     all.forEach(function (w) { if (w.x0 < minX) minX = w.x0; if (w.x1 > maxX) maxX = w.x1; });
     var nb = Math.floor(maxX / RES) + 2;
     var covered = new Array(nb + 1).fill(0);
-    var multi = rowsBasis.filter(function (r) { return r.length > 1; });
-    var basis = multi.length >= 2 ? multi : rowsBasis;
+    function gapsOf(r) {
+      var ws = r.slice().sort(function (a, b) { return a.x0 - b.x0; });
+      var g = 0;
+      for (var q = 1; q < ws.length; q++) {
+        if (ws[q].x0 - ws[q - 1].x1 >= Math.max(minGap, 6)) g++;
+      }
+      return g;
+    }
+    var tabular = rowsBasis.filter(function (r) { return gapsOf(r) >= 2; });
+    var basis;
+    if (tabular.length >= 3) basis = tabular;
+    else {
+      var multi = rowsBasis.filter(function (r) { return r.length > 1; });
+      basis = multi.length >= 2 ? multi : rowsBasis;
+    }
     basis.forEach(function (r) {
       r.forEach(function (w) {
         var b0 = Math.max(0, Math.floor(w.x0 / RES)), b1 = Math.min(nb, Math.floor(w.x1 / RES));
         for (var b = b0; b <= b1; b++) covered[b]++;
       });
     });
-    var thresh = Math.max(1, Math.floor(basis.length * 0.08));
+    var thresh = Math.max(1, Math.floor(basis.length * threshFrac));
     var seps = [], inGap = false, gapStart = 0;
     for (var b = Math.floor(minX / RES); b <= Math.floor(maxX / RES); b++) {
       if (covered[b] <= thresh) {
@@ -114,7 +128,7 @@
     return seps;
   }
 
-  function applyBounds(rows, seps) {
+  function applyBounds(rows, seps, minGap) {
     if (!seps.length) {
       return rows.map(function (r) {
         return [r.slice().sort(function (a, b) { return a.x0 - b.x0; })
@@ -122,16 +136,30 @@
       });
     }
     var bounds = [-1e9].concat(seps, [1e9]);
+    function bandOf(x) {
+      for (var j = 0; j < bounds.length - 1; j++) {
+        if (x >= bounds[j] && x < bounds[j + 1]) return j;
+      }
+      return bounds.length - 2;
+    }
     return rows.map(function (r) {
-      var cells = new Array(bounds.length - 1).fill("");
-      r.slice().sort(function (a, b) { return a.x0 - b.x0; }).forEach(function (w) {
-        var cx = (w.x0 + w.x1) / 2;
-        for (var j = 0; j < bounds.length - 1; j++) {
-          if (cx >= bounds[j] && cx < bounds[j + 1]) {
-            cells[j] = (cells[j] + " " + w.text).trim();
-            break;
-          }
+      var ws = r.slice().sort(function (a, b) { return a.x0 - b.x0; });
+      if (minGap != null && ws.length > 1) {
+        var biggest = 0;
+        for (var q = 1; q < ws.length; q++) {
+          var g = ws[q].x0 - ws[q - 1].x1;
+          if (g > biggest) biggest = g;
         }
+        if (biggest < Math.max(minGap, 6)) {
+          var cells0 = new Array(bounds.length - 1).fill("");
+          cells0[bandOf((ws[0].x0 + ws[0].x1) / 2)] = ws.map(function (w) { return w.text; }).join(" ");
+          return cells0;
+        }
+      }
+      var cells = new Array(bounds.length - 1).fill("");
+      ws.forEach(function (w) {
+        var j = bandOf((w.x0 + w.x1) / 2);
+        cells[j] = (cells[j] + " " + w.text).trim();
       });
       return cells;
     });
@@ -153,12 +181,18 @@
     return out;
   }
 
-  function globalGrids(wordsPages, minGap) {
+  function globalGrids(wordsPages, minGap, threshFrac) {
     var rowsPages = wordsPages.map(clusterRows);
     var basis = [];
     rowsPages.forEach(function (rows) { rows.forEach(function (r) { basis.push(r); }); });
-    var seps = findBounds(basis, minGap);
-    return rowsPages.map(function (rows) { return cleanGrid(applyBounds(rows, seps), true); });
+    var seps = findBounds(basis, minGap, threshFrac);
+    return rowsPages.map(function (rows) { return cleanGrid(applyBounds(rows, seps, minGap), true); });
+  }
+
+  var NUMTOK_RE = /(?<![\d,.])\d{1,3}(?:,\d{2,3})*\.\d{2,4}(?![\d])|(?<![\d,.])\d+\.\d{2,4}(?![\d])/g;
+  function numTokens(cell) {
+    var m = String(cell || "").match(NUMTOK_RE);
+    return m ? m.length : 0;
   }
 
   function scoreGrid(grid) {
@@ -166,43 +200,106 @@
     if (grid.length < 2) return 0;
     var ncols = Math.max.apply(null, grid.map(function (r) { return r.length; }));
     if (ncols < 2) return 1;
-    var cells = 0, filled = 0;
-    grid.forEach(function (r) { r.forEach(function (c) { cells++; if (c) filled++; }); });
-    var counts = grid.map(function (r) { return r.filter(Boolean).length; });
-    var mean = counts.reduce(function (a, b) { return a + b; }, 0) / counts.length;
-    var sd = Math.sqrt(counts.reduce(function (a, b) { return a + (b - mean) * (b - mean); }, 0) / counts.length);
-    var consistency = Math.max(0, 1 - sd / Math.max(1, mean));
+    var filled = [];
+    var cells = 0;
+    grid.forEach(function (r) { r.forEach(function (c) { cells++; if (c) filled.push(c); }); });
+    var fillRatio = filled.length / Math.max(1, cells);
     var coherent = 0;
     for (var j = 0; j < ncols; j++) {
-      var col = grid.slice(1).map(function (r) { return r[j]; }).filter(Boolean);
+      var col = grid.map(function (r) { return r[j]; }).filter(Boolean);
       if (col.length < 2) continue;
       var num = col.filter(isNumber).length, dat = col.filter(isDate).length;
-      if (num / col.length > 0.75 || dat / col.length > 0.75) coherent++;
+      if (num / col.length >= 0.6 || dat / col.length >= 0.6) coherent++;
     }
-    var coherence = coherent / ncols;
-    var size = Math.min(1, grid.length * ncols / 120);
-    return Math.round(100 * (0.35 * filled / cells + 0.25 * consistency + 0.25 * coherence + 0.15 * size) * 100) / 100;
+    var undersplit = filled.filter(function (c) { return numTokens(c) >= 2; }).length / Math.max(1, filled.length);
+    var dataRows = grid.filter(function (r) { return r.some(isNumber); }).length;
+    return Math.round((10 * coherent + 1.5 * ncols + Math.min(15, dataRows / 5) +
+                       8 * fillRatio - 35 * undersplit) * 100) / 100;
   }
 
   /* ---- y-aware lines with document-global geometry ---- */
 
-  function globalStreamLines(wordsPages, minGap) {
+  function globalStreamLines(wordsPages, minGap, threshFrac) {
     var rowsPages = wordsPages.map(clusterRows);
     var basis = [];
     rowsPages.forEach(function (rows) { rows.forEach(function (r) { basis.push(r); }); });
-    var seps = findBounds(basis, minGap);
+    var seps = findBounds(basis, minGap, threshFrac);
     var out = [], offset = 0;
     rowsPages.forEach(function (rows) {
       var page = [];
       rows.forEach(function (r) {
         var y = Infinity;
         r.forEach(function (w) { if (w.top < y) y = w.top; });
-        var cells = applyBounds([r], seps)[0].map(function (c) { return String(c).trim(); });
+        var cells = applyBounds([r], seps, minGap)[0].map(function (c) { return String(c).trim(); });
         if (cells.some(Boolean)) page.push({ y: y + offset, cells: cells });
       });
       offset += 1000;
       out.push(page);
     });
+    return out;
+  }
+
+
+
+  function splitLeadingDateColumns(grid) {
+    if (!grid.length) return grid;
+    var dateRx = /^(\d{1,2}[\/\-.]\d{1,2}[\/\-.]\d{2,4}|\d{1,2}[\-\s][A-Za-z]{3,9}[\-\s]\d{2,4})\s+(\S[\s\S]*)$/;
+    var ncols = Math.max.apply(null, grid.map(function (r) { return r.length; }));
+    for (var pass = 0; pass < ncols + 2; pass++) {
+      var split = -1;
+      for (var j = 0; j < ncols; j++) {
+        var cells = grid.map(function (r) { return j < r.length ? String(r[j]).trim() : ""; })
+          .filter(Boolean);
+        if (cells.length < 3) continue;
+        var matched = cells.map(function (c) { return dateRx.exec(c); });
+        var hits = matched.filter(Boolean);
+        if (hits.length < 6 && hits.length / cells.length < 0.5) continue;
+        var remNum = hits.filter(function (m) { return isNumber(m[2]); }).length;
+        if (remNum > hits.length * 0.4) continue;
+        split = j; break;
+      }
+      if (split < 0) break;
+      grid = grid.map(function (r) {
+        r = r.slice();
+        while (r.length < ncols) r.push("");
+        var m = dateRx.exec(String(r[split]).trim());
+        if (m) return r.slice(0, split).concat([m[1], m[2]], r.slice(split + 1));
+        var cell = String(r[split]).trim();
+        var filled = r.filter(function (c) { return String(c).trim(); }).length;
+        var sp = cell.indexOf(" ");
+        if (filled >= 3 && sp > 0) {
+          return r.slice(0, split).concat([cell.slice(0, sp), cell.slice(sp + 1).trim()], r.slice(split + 1));
+        }
+        return r.slice(0, split).concat([r[split], ""], r.slice(split + 1));
+      });
+      ncols += 1;
+    }
+    return grid;
+  }
+
+  function stackWrappedHeaders(grid) {
+    function numericish(row) {
+      return row.some(function (c) { return c && (isNumber(c) || isDate(c)); });
+    }
+    var out = [], i = 0;
+    while (i < grid.length) {
+      var row = grid[i].slice();
+      if (i + 1 < grid.length && !numericish(row) && !numericish(grid[i + 1])) {
+        var nxt = grid[i + 1];
+        var filledNext = [];
+        nxt.forEach(function (c, j) { if (String(c).trim()) filledNext.push(j); });
+        var filledCur = {};
+        row.forEach(function (c, j) { if (String(c).trim()) filledCur[j] = 1; });
+        if (filledNext.length >= 2 && filledNext.every(function (j) { return filledCur[j]; })) {
+          filledNext.forEach(function (j) { row[j] = (String(row[j]) + " " + String(nxt[j])).trim(); });
+          out.push(row);
+          i += 2;
+          continue;
+        }
+      }
+      out.push(row);
+      i += 1;
+    }
     return out;
   }
 
@@ -443,36 +540,44 @@
 
   /* judge candidates: y-aware lines first (statement), grids as fallback */
   function bestExtraction(wordsPages) {
-    var mgs = [4, 7, 11];
+    var mgs = [4, 7, 11], tfs = [0.08, 0.2];
     var bestStmt = null;
     mgs.forEach(function (mg) {
-      try {
-        var pagesLines = globalStreamLines(wordsPages, mg);
-        var flat = [];
-        pagesLines.forEach(function (pg) { pg.forEach(function (l) { flat.push(l); }); });
-        if (!flat.length) return;
-        var st = reconstructLines(flat);
-        var cand = { tag: "lines-" + mg, stmt: st };
-        if (!bestStmt) { bestStmt = cand; return; }
-        var a = st, b = bestStmt.stmt;
-        if (a.strict > b.strict || (a.strict === b.strict && (a.confidence > b.confidence ||
-            (a.confidence === b.confidence && a.rows.length > b.rows.length)))) bestStmt = cand;
-      } catch (e) {}
+      tfs.forEach(function (tf) {
+        try {
+          var pagesLines = globalStreamLines(wordsPages, mg, tf);
+          var flat = [];
+          pagesLines.forEach(function (pg) { pg.forEach(function (l) { flat.push(l); }); });
+          if (!flat.length) return;
+          var st = reconstructLines(flat);
+          var cand = { tag: "lines-" + mg + "-" + tf, stmt: st };
+          if (!bestStmt) { bestStmt = cand; return; }
+          var a = st, b = bestStmt.stmt;
+          if (a.strict > b.strict || (a.strict === b.strict && (a.confidence > b.confidence ||
+              (a.confidence === b.confidence && a.rows.length > b.rows.length)))) bestStmt = cand;
+        } catch (e) {}
+      });
     });
     // generic grid candidates (used when no statement found)
     var candidates = [];
     var perPage = wordsPages.map(function (words) {
       var best = null, bestScore = -1;
       mgs.forEach(function (mg) {
-        var rows = clusterRows(words);
-        var g = cleanGrid(applyBounds(rows, findBounds(rows, mg)), false);
-        var s = scoreGrid(g);
-        if (s > bestScore) { bestScore = s; best = g; }
+        tfs.forEach(function (tf) {
+          var rows = clusterRows(words);
+          var g = cleanGrid(applyBounds(rows, findBounds(rows, mg, tf), mg), false);
+          var s = scoreGrid(g);
+          if (s > bestScore) { bestScore = s; best = g; }
+        });
       });
       return best || [];
     });
     candidates.push({ tag: "per-page", pages: perPage });
-    mgs.forEach(function (mg) { candidates.push({ tag: "global-" + mg, pages: globalGrids(wordsPages, mg) }); });
+    mgs.forEach(function (mg) {
+      tfs.forEach(function (tf) {
+        candidates.push({ tag: "global-" + mg + "-" + tf, pages: globalGrids(wordsPages, mg, tf) });
+      });
+    });
     var winner = null;
     candidates.forEach(function (c) {
       var comb = [], width = 0;
@@ -485,6 +590,10 @@
       if (!winner || c.score > winner.score) winner = c;
     });
     if (winner) {
+      winner.pages = winner.pages.map(function (g) { return stackWrappedHeaders(splitLeadingDateColumns(g)); });
+      var comb2 = [];
+      winner.pages.forEach(function (g) { g.forEach(function (r) { comb2.push(r); }); });
+      winner.combined = comb2;
       winner.stmt = bestStmt ? bestStmt.stmt : null;
       if (bestStmt) winner.tag = bestStmt.tag;
     }
@@ -605,6 +714,61 @@
     });
   }
 
+
+  function genericSheets(pages, oneSheet, meta) {
+    function toRows(grid) {
+      var ncols = 0;
+      grid.forEach(function (r) { if (r.length > ncols) ncols = r.length; });
+      var widths = [];
+      for (var j = 0; j < ncols; j++) widths.push(9);
+      // header = richest all-text row appearing before the first numeric row
+      var firstNum = grid.length;
+      for (var k = 0; k < grid.length; k++) {
+        if (grid[k].some(function (c) { return c && isNumber(c); })) { firstNum = k; break; }
+      }
+      var headerIdx = -1, headerFilled = 2;
+      for (var k2 = 0; k2 < firstNum; k2++) {
+        var fc = grid[k2].filter(function (c) { return String(c).trim(); }).length;
+        var num = grid[k2].some(function (c) { return c && isNumber(c); });
+        if (!num && fc > headerFilled) { headerFilled = fc; headerIdx = k2; }
+      }
+      var rows = grid.map(function (r, ri) {
+        var isHeader = ri === headerIdx;
+        return r.map(function (c, j) {
+          var t = String(c == null ? "" : c).trim();
+          if (t.length + 2 > widths[j]) widths[j] = Math.min(60, t.length + 2);
+          if (!t) return { v: "", s: 2 };
+          if (isHeader) return { v: t, s: 1 };
+          var n = parseNumber(t);
+          if (n !== null && t.length <= 18) return { v: n, s: 3, n: true };
+          var d = parseDate(t);
+          if (d) return { v: d.str, s: 2 };
+          return { v: t, s: 2 };
+        });
+      });
+      return { rows: rows, widths: widths };
+    }
+    var sheets = [];
+    if (oneSheet) {
+      var comb = [];
+      pages.forEach(function (g) { g.forEach(function (r) { comb.push(r); }); });
+      var t1 = toRows(comb.length ? comb : [[""]]);
+      sheets.push({ name: "Data", rows: t1.rows, widths: t1.widths });
+    } else {
+      pages.forEach(function (g, i) {
+        if (!g.length) return;
+        var t2 = toRows(g);
+        sheets.push({ name: "Page " + (i + 1), rows: t2.rows, widths: t2.widths });
+      });
+      if (!sheets.length) sheets.push({ name: "Data", rows: [[{ v: "", s: 0 }]], widths: [9] });
+    }
+    if (meta && meta.length) {
+      sheets.push({ name: "Conversion Info",
+                    rows: meta.map(function (m) { return [{ v: m, s: 0 }]; }), widths: [80] });
+    }
+    return sheets;
+  }
+
   function statementSheets(st, sourceName) {
     var extras = st.extraHeaders || [];
     var rows = [];
@@ -668,6 +832,7 @@
     globalStreamLines: globalStreamLines, matchHeaders: matchHeaders, findHeader: findHeader,
     leadDate: leadDate, repairMapping: repairMapping, reconstructLines: reconstructLines,
     isStatementGrid: isStatementGrid, bestExtraction: bestExtraction,
+    stackWrappedHeaders: stackWrappedHeaders, splitLeadingDateColumns: splitLeadingDateColumns, genericSheets: genericSheets,
     statementSheets: statementSheets, sheetXml: sheetXml
   };
   if (typeof module !== "undefined" && module.exports) { module.exports = XT; return; }
@@ -903,19 +1068,18 @@
               finishMsg(msg);
             });
           }
-          return L.ensure("xlsx").then(function () {
-            var XLSX = root.XLSX;
-            var meta = ["ProPDF conversion report", "Source: " + file.name,
-                        "Geometry: " + (winner ? winner.tag : "n/a"), "Pages: " + n];
-            if (meanConf != null) meta.push("Mean OCR confidence: " + meanConf + "%");
-            var wb = buildGenericWorkbook(XLSX, winner ? winner.pages : [], oneSheet, meta);
-            var cells = 0;
-            (winner ? winner.combined : []).forEach(function (r2) { r2.forEach(function (c2) { if (c2) cells++; }); });
-            var bytes = XLSX.write(wb, { bookType: "xlsx", type: "array" });
-            P.download(base + ".xlsx", bytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
-            finishMsg(cells ? "Extracted " + cells + " cells from " + n + " page(s)." :
-              "No table content could be read. If this is a scanned PDF, set Mode = Force OCR and pick the right language.");
-          });
+          var meta = ["ProPDF conversion report", "Source: " + file.name,
+                      "Geometry: " + (winner ? winner.tag : "n/a"), "Pages: " + n];
+          if (meanConf != null) meta.push("Mean OCR confidence: " + meanConf + "%");
+          prog.set(97, "Building styled workbook…");
+          return buildStyledWorkbook(genericSheets(winner ? winner.pages : [], oneSheet, meta))
+            .then(function (blob) {
+              saveBlob(base + ".xlsx", blob);
+              var cells = 0;
+              (winner ? winner.combined : []).forEach(function (r2) { r2.forEach(function (c2) { if (c2) cells++; }); });
+              finishMsg(cells ? "Extracted " + cells + " cells from " + n + " page(s) into a formatted table." :
+                "No table content could be read. If this is a scanned PDF, set Mode = Force OCR and pick the right language.");
+            });
         }
         return collect();
       }).catch(function (e) {

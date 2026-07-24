@@ -440,7 +440,7 @@
   window.ProPDF = App;
 
   /* ---------------- version + update check ---------------- */
-  App.VERSION = "v13.0";
+  App.VERSION = "v14.0";
   var GC_ENDPOINT = "";
   function initAnalytics(url) {
     if (GC_ENDPOINT || !url || typeof location === "undefined" || !/^https?:/.test(location.protocol)) return;
