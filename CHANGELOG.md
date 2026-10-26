@@ -1,5 +1,53 @@
 # Changelog
 
+## v15.0 — Sign/Stamp editor + PDF→Excel for any document (October 2026)
+
+### New: Sign / Stamp / Overlay editor (replaces the single-overlay tool)
+- Add **any number** of stamps, signatures, logos, letterheads (PNG/JPG/PDF) and
+  text boxes — e.g. one firm stamp plus two partner signatures — on **any pages**.
+- Every element is independent: drag to move, corner handles to resize, top
+  handle to rotate (Shift = 15° steps), opacity, delete.
+- Layers panel per page (like iLovePDF's right panel): reorder front/back,
+  duplicate, rename, delete.
+- **Copy / Paste** between pages (Ctrl+C / Ctrl+V), Duplicate (Ctrl+D),
+  **Copy to pages…** (all / other / odd / even / specific pages), and
+  "copy everything on this page" for whole-page sign-offs.
+- Library of everything you've added — click to place again on any page.
+- "Remove white background" for scanned stamps; text boxes with size, colour,
+  bold/italic, alignment (double-click to edit).
+- Undo / Redo (Ctrl+Z / Ctrl+Y), arrow-key nudging, PageUp/PageDown.
+- Exact placement in the saved PDF on portrait, landscape, rotated and cropped
+  pages (verified); also fixes the old tool saving rotation in the wrong direction.
+
+### PDF → Excel: works for any document, not just bank statements
+- **Multi-line entries stay in ONE cell.** A description that wraps over 2–3
+  printed lines becomes one cell, and the next entry starts a new row — for
+  statements, ledgers, P&L, Balance Sheets, broker reports, 26AS, invoices.
+- Reads the table's own **borders** from the PDF: text between two horizontal
+  rules is one cell; vertical rules give exact columns.
+- Borderless tables: a line is joined to the entry above only if it is a true
+  word-wrap (its first word could not have fitted on the previous line), ends
+  in a joiner, or starts lowercase — short headings like "To Interest to
+  Partners" stay as their own rows. Amounts on the first or last line both work.
+- **Two-sided accounts** (P&L A/c, Appropriation A/c, Balance Sheet, Income &
+  Expenditure, Receipts & Payments) are split into Dr | Cr, each side merged
+  independently, then laid side by side; several accounts on one page are
+  handled separately.
+- Wrapped dates ("01-APR-" / "2025") are rejoined; left-aligned headers over
+  right-aligned amounts land in the right column; stacked headers read
+  top-to-bottom ("TDS Amount").
+- Bank statements: record boundaries now use the largest vertical gap between
+  dated lines (works whether narration sits above or below the date).
+
+### Verified
+New multi-line test set (9 document types: fully-ruled and horizontal-rule
+statements with 3–4 line narrations, T-format P&L, P&L + Appropriation on one
+page, Balance Sheet, ledger, broker capital-gains, Form 26AS-style, invoice):
+**9/9 exact, every entry in consecutive rows**. Regression: real Axis statement
+428/428 with totals to the paisa and 100% balance continuity; real MF statement
+matches PDF24's 10 columns; synthetic statements unchanged. 120-page statement
+analysed in ~5 seconds in the browser. All tests run through the real UI.
+
 ## v14.0 — Every table to PDF24 quality, not just statements (July 2026)
 
 Tested against a real mutual-fund capital-gains statement (JSP Wealth /

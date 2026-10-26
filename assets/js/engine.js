@@ -398,49 +398,9 @@
     t.render = function (panel) { wrap(panel, orig); };
   }
 
-  /* PDF → Excel: engine mode with validation report */
-  overrideTool("pdf2excel", function (panel, orig) {
-    currentToolId = "pdf2excel";
-    if (!Engine.available) { orig(panel); return; }
-    var b = el("div");
-    b.style.cssText = "font-size:12px;margin:4px 0 10px;padding:8px 12px;border-radius:8px;background:rgba(46,160,67,.1);border:1px solid rgba(46,160,67,.35);";
-    b.innerHTML = "⚡ <strong>Engine mode:</strong> document classification → best-engine table extraction → semantic reconstruction → numeric validation. All local.";
-    panel.appendChild(b);
-    enginePanel(panel, {
-      capability: "PDF → Excel (flagship)",
-      accept: "application/pdf,.pdf", hint: "text or scanned PDF (auto-OCR)", multiple: false,
-      optionsHtml:
-        field("Layout", '<select id="exSheets"><option value="true">One sheet (combined)</option><option value="false">One sheet per page</option></select>') +
-        field("If scanned, OCR language", '<select id="exLang">' + OCR_LANGS + "</select>") +
-        field("Mode", '<select id="exForce"><option value="false">Auto-detect (OCR only if needed)</option><option value="true">Force OCR</option></select>'),
-      buttonLabel: "Extract to Excel ▸", endpoint: "/convert/excel", ext: ".xlsx",
-      fields: function () {
-        return {
-          one_sheet: document.getElementById("exSheets").value,
-          langs: document.getElementById("exLang").value,
-          force_ocr: document.getElementById("exForce").value
-        };
-      },
-      describe: function (r) {
-        var msg = "Detected: <strong>" + (r.doc_type_label || "document") + "</strong> — extracted " + r.rows + " row(s) from " + r.pages + " page(s).";
-        if (r.mode === "bank_statement") {
-          msg += "<br>Semantic statement reconstruction: totals Dr " + r.total_debits + " / Cr " + r.total_credits +
-            ", balance-continuity confidence <strong>" + r.continuity_confidence + "%</strong>.";
-          if (r.continuity_failed_rows && r.continuity_failed_rows.length) {
-            msg += "<br>⚠️ " + r.continuity_failed_rows.length + " row(s) flagged — see the red rows and the Validation sheet.";
-          } else {
-            msg += " ✔ Every row passed the balance check.";
-          }
-        }
-        if (r.ocr_pages) {
-          msg += "<br>OCR used on " + r.ocr_pages + " page(s), confidence " + (r.mean_ocr_confidence || "n/a") + "%." +
-            (r.mean_ocr_confidence && r.mean_ocr_confidence < 80 ? " ⚠️ Verify numbers against the source." : "");
-        }
-        (r.warnings || []).forEach(function (w) { msg += "<br>⚠️ " + w; });
-        return msg;
-      }
-    });
-  });
+  /* PDF → Excel stays on the in-browser smart converter (v15): it reads table
+     borders, merges multi-line cells and splits two-sided accounts, and is
+     ahead of the engine's converter. The engine keeps its /convert/excel API. */
 
   /* PDF → Word: engine mode produces real .docx */
   overrideTool("pdf2word", function (panel, orig) {

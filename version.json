@@ -1,5 +1,5 @@
 {
-  "version": "v14.0",
-  "notes": "Any table now converts to PDF24-level quality, not just bank statements. New generic-table engine: tabular-aware column detection (address/title blocks no longer break columns), wrapped-header stacking, leading-date column splitting, and styled bordered output with a proper header row. Verified on a real mutual-fund capital-gains statement (10 columns, exact match to PDF24).",
+  "version": "v15.0",
+  "notes": "New Sign / Stamp / Overlay editor: unlimited stamps, signatures, logos and text on any pages \u2014 move, resize, rotate, layers, copy-paste between pages, undo. PDF\u2192Excel now works for ANY document: multi-line entries stay in one cell, table borders are read directly, two-sided accounts (P&L, Balance Sheet) come out Dr | Cr side by side.",
   "analytics": ""
 }
